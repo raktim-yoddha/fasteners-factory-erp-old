@@ -22,7 +22,8 @@ create table public.plants (
   name text not null check (char_length(trim(name)) between 1 and 160),
   timezone text not null default 'Asia/Kolkata',
   created_at timestamptz not null default now(),
-  unique (company_id, name)
+  unique (company_id, name),
+  unique (id, company_id)
 );
 
 create table public.profiles (

@@ -22,3 +22,10 @@ erDiagram
 - `audit_log` is append-only: no authenticated insert/update/delete policy exists. Trusted future commands write it.
 - Every future operational table carries `company_id`, enables RLS, indexes its RLS filters, and uses database
   commands for multi-record changes.
+
+## Master data
+
+`customers`, `suppliers`, `items`, `drawings`, `drawing_revisions`, `warehouses`, `stock_locations` and
+`work_centres` are all company-scoped. Item, partner, warehouse and work-centre codes are unique inside the
+company. A drawing revision belongs to the same company as its drawing and item. Once a revision is approved,
+the database rejects every update; a replacement revision must be created instead.

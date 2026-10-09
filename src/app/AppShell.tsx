@@ -2,10 +2,12 @@ import { UpdatePrompt } from '@/pwa/UpdatePrompt'
 import { OperationsWorkspace } from '@/app/OperationsWorkspace'
 import { SignInScreen } from '@/auth/SignInScreen'
 import { useAuthSession } from '@/auth/useAuthSession'
+import { useDashboardSummary } from '@/features/dashboard/useDashboardSummary'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 
 export function AppShell() {
   const { loading, session } = useAuthSession()
+  const dashboardSummary = useDashboardSummary(Boolean(session))
 
   async function requestSignInLink(email: string) {
     if (!supabase) return 'The backend connection is not configured.'
@@ -39,7 +41,12 @@ export function AppShell() {
 
   return (
     <>
-      <OperationsWorkspace email={session.user.email ?? 'Approved user'} onSignOut={signOut} />
+      <OperationsWorkspace
+        email={session.user.email ?? 'Approved user'}
+        onSignOut={signOut}
+        summary={dashboardSummary.data}
+        summaryError={dashboardSummary.isError}
+      />
       <UpdatePrompt />
     </>
   )

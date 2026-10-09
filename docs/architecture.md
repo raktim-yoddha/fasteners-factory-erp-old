@@ -48,6 +48,9 @@ L1 now defines the authorization root: `companies`, `plants`, `profiles`, `compa
 `user_company_roles`, role-to-permission mappings and `audit_log`. RLS uses private security-definer helpers;
 business tables and transactional commands are added only after this base is applied and integration-tested.
 
+The signed-in Command Center begins with a query hook that reads count-only summaries from RLS-scoped tables;
+it displays neither client-side fixtures nor a success state until Supabase returns data.
+
 ## Environments
 Local Supabase (CLI + Docker) for development and migration tests; one hosted project for the pilot.
 Secrets only in Supabase/GitHub secrets, never in the repo. Region and plan: open questions Q1-Q2.

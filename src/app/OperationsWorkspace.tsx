@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { DashboardSummary } from '@/features/dashboard/useDashboardSummary'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
 const modules = [
@@ -12,9 +13,11 @@ const modules = [
 type OperationsWorkspaceProps = {
   email: string
   onSignOut: () => Promise<void>
+  summary: DashboardSummary | undefined
+  summaryError: boolean
 }
 
-export function OperationsWorkspace({ email, onSignOut }: OperationsWorkspaceProps) {
+export function OperationsWorkspace({ email, onSignOut, summary, summaryError }: OperationsWorkspaceProps) {
   const [activeModule, setActiveModule] = useState(0)
   const [moduleName, moduleDescription] = modules[activeModule]!
 
@@ -60,18 +63,27 @@ export function OperationsWorkspace({ email, onSignOut }: OperationsWorkspacePro
             </span>
           </div>
           <section className="mt-6 rounded-xl border border-line bg-panel p-5" aria-labelledby="records-title">
-            <h3 className="font-bold" id="records-title">{isSupabaseConfigured ? 'No permitted records yet' : 'Connect the backend to load records'}</h3>
+            <h3 className="font-bold" id="records-title">{summaryError ? 'Records could not be loaded' : 'Live company records'}</h3>
             <p className="mt-2 max-w-prose text-sm leading-6 text-muted">
-              {isSupabaseConfigured
-                ? 'Your access is active, but this workspace has no records available for your current company permissions.'
-                : 'Set the public Supabase URL and publishable key in the deployment environment. This app does not use local sample records as operational truth.'}
+              {summaryError
+                ? 'The backend rejected or could not complete this read. Check your connection and company permissions before retrying.'
+                : summary
+                  ? 'Counts reflect only the records allowed by your current company permissions.'
+                  : 'Loading your company-scoped records…'}
             </p>
           </section>
           <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Workflow status">
-            {['Sales order', 'Stock reservation', 'Quality release', 'Packing', 'Shipment', 'Audit trail'].map((label) => (
+            {[
+              ['Open RFQs', summary?.rfqs],
+              ['Sales orders', summary?.salesOrders],
+              ['Available lots', summary?.availableLots],
+              ['Shipments', summary?.shipments],
+              ['Quality release', undefined],
+              ['Audit trail', undefined]
+            ].map(([label, count]) => (
               <article className="rounded-xl border border-line bg-panel p-4" key={label}>
                 <p className="text-sm font-semibold">{label}</p>
-                <p className="mt-2 text-sm text-muted">No record selected</p>
+                <p className="mt-2 text-sm text-muted">{typeof count === 'number' ? count : 'Not connected in this MVP'}</p>
               </article>
             ))}
           </section>

@@ -25,6 +25,8 @@ master data, RFQ, feasibility, quotation, approval, sales order, receipt, QC rel
 
 The suite intentionally skips when those variables are absent. It must not target a shared or production project:
 bootstrap is correctly one-time, so each run needs a new migrated project or disposable database branch.
+The manual `Hosted E2E` GitHub Actions workflow fails instead of skipping when the same four runner secrets are
+absent, preventing a false-green deployment test.
 
 ## Hosted database integration check
 

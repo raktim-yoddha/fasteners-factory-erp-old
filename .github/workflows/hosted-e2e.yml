@@ -1,0 +1,39 @@
+name: Hosted E2E
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-e2e
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Disposable hosted manufacturing path
+    runs-on: ubuntu-latest
+    env:
+      E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Require isolated hosted test secrets
+        run: |
+          for name in E2E_BASE_URL E2E_SUPABASE_URL E2E_SUPABASE_SERVICE_ROLE_KEY E2E_TEST_EMAIL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name must be configured as a repository secret for this manually triggered workflow."
+              exit 1
+            fi
+          done
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e

@@ -28,3 +28,9 @@ SMTP credential to Pages build variables.
 
 After deployment, verify the final URL is present in Supabase Auth redirect configuration, install the PWA in
 Windows Chrome and Android Chrome, then run the hosted Playwright suite using an isolated test project or branch.
+
+## Hosted E2E runner
+
+After creating an isolated deployment and test account, add these **GitHub Actions secrets** (not Pages variables):
+`E2E_BASE_URL`, `E2E_SUPABASE_URL`, `E2E_SUPABASE_SERVICE_ROLE_KEY` and `E2E_TEST_EMAIL`. Then manually run the
+`Hosted E2E` workflow. It fails before Playwright if any secret is absent and must never point to this pilot project.

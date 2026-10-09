@@ -17,3 +17,10 @@ to the browser. The suite runs SAMPLE records through bootstrap, master data, co
 
 Hosted E2E requires a deployed app URL, provisioned test user and freshly migrated isolated database. It is skipped
 when secrets are absent and must never target the pilot or production tenant.
+
+## Amendment (2026-10-10): Manual secret-gated runner
+
+The repository provides a manually triggered `Hosted E2E` workflow. It requires the deployed test URL, isolated
+Supabase URL, service-role key and test email as GitHub Actions secrets, fails before Playwright when any is absent,
+and is not part of the normal push CI. The service-role key exists only in the runner environment and is never a
+Cloudflare Pages build variable.

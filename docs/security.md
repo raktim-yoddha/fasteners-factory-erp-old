@@ -28,3 +28,6 @@ read used by the browser Command Center.
 There is no user-invitation UI, real factory data, storage bucket, service-role browser operation or deployed Pages
 URL yet. Passwordless email delivery, installation on the target Windows and Android devices, and unskipped browser
 E2E remain deployment acceptance work.
+
+The service-role key for hosted E2E belongs only in a manually triggered GitHub Actions runner secret for an isolated
+test project. It is not a Pages variable and is never available to the browser.

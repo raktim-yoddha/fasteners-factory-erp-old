@@ -33,12 +33,15 @@ translation without exposing unknown server details. The hosted Playwright manuf
 sign-in, bootstrap, master data, commercial, stock and dispatch commands using SAMPLE data; it requires a freshly
 migrated disposable project and approved test user.
 
+The `Hosted E2E` GitHub Actions workflow is manual and secret-gated so the normal CI cannot accidentally point the
+browser suite at a shared tenant.
+
 ## Implementation notes
 The Command Center reads RLS-scoped live summary counts after sign-in. Browser forms only invoke guarded commands;
 they read current revisions immediately before approval, reservation, preparation and dispatch.
 
 ## Validation evidence (exact command + result)
-`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (27 files, 53 tests passed); `pnpm e2e` (suite loads and
+`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (28 files, 54 tests passed); `pnpm e2e` (suite loads and
 correctly skips without required hosted E2E secrets); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-10.
 
 Hosted database validation on 2026-10-10: ran `tests/integration/hosted-manufacturing-path.sql` through the
@@ -49,7 +52,7 @@ company, order, shipment and ledger rows remained. The new command is unavailabl
 `authenticated` only.
 
 ## Docs updated
-`adr/0004-domain-integrity.md`, `adr/0007-passwordless-approved-user-sign-in.md`, `adr/0012-initial-tenant-bootstrap.md`, `adr/0013-hosted-end-to-end-verification.md`, `docs/architecture.md`, `docs/domain-model.md`, `docs/security.md`, `docs/testing.md` and this task record.
+`adr/0004-domain-integrity.md`, `adr/0007-passwordless-approved-user-sign-in.md`, `adr/0012-initial-tenant-bootstrap.md`, `adr/0013-hosted-end-to-end-verification.md`, `docs/architecture.md`, `docs/domain-model.md`, `docs/security.md`, `docs/testing.md`, `docs/deployment.md` and this task record.
 
 ## Follow-ups / risks
 The hosted Supabase project is ready for an administrator-created approved user. Browser/device acceptance and

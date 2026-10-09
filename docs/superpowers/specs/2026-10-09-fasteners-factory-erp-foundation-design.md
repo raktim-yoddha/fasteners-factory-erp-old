@@ -2,7 +2,9 @@
 
 ## Status
 
-**DESIGN PROPOSAL** — reviewed in chat on 2026-10-09; implementation begins only after the owner approves this file.
+**FOUNDATION DESIGN RECORD** — approved by the owner on 2026-10-09 and implemented as the L1 base. This document
+deliberately describes only the foundation; current MVP scope and delivery status are governed by
+`docs/roadmap.md` and `docs/tasks/TASKS.md` under the `AGENTS.md` contract.
 
 ## Product decisions
 

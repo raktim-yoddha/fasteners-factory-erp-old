@@ -39,8 +39,9 @@ Reads are RLS-scoped queries. Writes that change business state go through named
 (`reserveMaterial`, `issueMaterial`, `recordProductionOutput`, `submitInspection`, `releaseFinishedGoods`,
 `verifyPacking`, `confirmDispatch`; brief G4), each atomic, idempotent and audited.
 
-The first commercial command, `create_rfq`, validates a request then creates the RFQ header, its lines and audit
-event atomically (ADR 0008). It is the only write route for those tables.
+The commercial command chain starts with `create_rfq`, then records feasibility, creates/approves a quotation and
+accepts it into a sales order (ADR 0008, ADR 0009). Each command validates its request, locks the changed record,
+checks its expected revision and emits the audit event atomically.
 
 ## Data
 Domains and table sketch: brief G3 (names are not final). Key shapes: company/plant scoping on every row,

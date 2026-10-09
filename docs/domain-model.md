@@ -46,6 +46,8 @@ engineering revision later.
 
 `create_rfq` is the initial RFQ write boundary: it validates the tenant customer and optional item scope, inserts
 the RFQ and its lines, writes the audit event and deduplicates retries with a command idempotency key.
+Feasibility locks and qualifies the RFQ; quotations pin only approved engineering revisions; acceptance creates a
+new sales order and pins the quotation lines rather than copying mutable engineering headers.
 
 ## Inventory ledger
 

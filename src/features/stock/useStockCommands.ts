@@ -5,12 +5,14 @@ import { supabase } from '@/lib/supabase'
 const uom = z.enum(['pcs', 'kg', 'm', 'set'])
 const receiptSchema = z.object({ companyId: z.uuid(), itemId: z.uuid(), locationId: z.uuid(), lotCode: z.string().trim().min(3).max(64), quantity: z.coerce.number().positive(), uom, idempotencyKey: z.uuid() })
 const releaseSchema = z.object({ companyId: z.uuid(), lotId: z.uuid(), expectedRevision: z.number().int().positive(), idempotencyKey: z.uuid() })
+const reservationSchema = z.object({ companyId: z.uuid(), salesOrderLineId: z.uuid(), lotId: z.uuid(), quantity: z.coerce.number().positive(), expectedSalesOrderRevision: z.number().int().positive(), idempotencyKey: z.uuid() })
 export type StockReceiptInput = z.input<typeof receiptSchema>
 export type StockReleaseInput = z.input<typeof releaseSchema>
+export type StockReservationInput = z.input<typeof reservationSchema>
 
 export function useStockCommands() {
   const queryClient = useQueryClient()
-  const invalidate = async () => { await Promise.all([queryClient.invalidateQueries({ queryKey: ['stock-lots'] }), queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })]) }
+  const invalidate = async () => { await Promise.all(['stock-lots', 'dashboard-summary', 'commercial-records', 'dispatch-records'].map((key) => queryClient.invalidateQueries({ queryKey: [key] }))) }
   const receipt = useMutation({
     mutationFn: async (input: StockReceiptInput) => {
       if (!supabase) throw new Error('Supabase is not configured.')
@@ -27,5 +29,13 @@ export function useStockCommands() {
       if (error) throw error
     }, onSuccess: invalidate
   })
-  return { receipt, release }
+  const reserve = useMutation({
+    mutationFn: async (input: StockReservationInput) => {
+      if (!supabase) throw new Error('Supabase is not configured.')
+      const request = reservationSchema.parse(input)
+      const { error } = await supabase.rpc('reserve_finished_goods', { p_company_id: request.companyId, p_sales_order_line_id: request.salesOrderLineId, p_lot_id: request.lotId, p_quantity: request.quantity, p_expected_sales_order_revision: request.expectedSalesOrderRevision, p_idempotency_key: request.idempotencyKey })
+      if (error) throw error
+    }, onSuccess: invalidate
+  })
+  return { receipt, release, reserve }
 }

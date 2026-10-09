@@ -114,7 +114,7 @@ export function AppShell() {
             onCreate={async (command) => createMasterData.mutateAsync(command)}
           />
         }
-        stockPanel={<StockActionsPanel companyId={activeCompanyId} options={masterDataOptions.data ?? { plants: [], warehouses: [], items: [], locations: [] }} lots={stockLots.data ?? []} receiving={stockCommands.receipt.isPending} releasing={stockCommands.release.isPending} onReceive={async (input) => { await stockCommands.receipt.mutateAsync(input) }} onRelease={async (input) => { await stockCommands.release.mutateAsync(input) }} />}
+        stockPanel={<StockActionsPanel companyId={activeCompanyId} options={masterDataOptions.data ?? { plants: [], warehouses: [], items: [], locations: [] }} lots={stockLots.data ?? []} records={commercialRecords.data ?? { rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }} receiving={stockCommands.receipt.isPending} releasing={stockCommands.release.isPending} reserving={stockCommands.reserve.isPending} onReceive={async (input) => { await stockCommands.receipt.mutateAsync(input) }} onRelease={async (input) => { await stockCommands.release.mutateAsync(input) }} onReserve={async (input) => { await stockCommands.reserve.mutateAsync(input) }} />}
       />
       <UpdatePrompt />
     </>

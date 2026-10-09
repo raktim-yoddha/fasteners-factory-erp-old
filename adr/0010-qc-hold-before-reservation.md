@@ -17,3 +17,8 @@ Only released lots can pass the existing reservation command.
 
 Receipt and QC release are separate audit events. This MVP deliberately does not define a factory inspection plan,
 measurements or rejection disposition; those require verified factory discovery in the quality milestone.
+
+## Amendment (2026-10-10): Reservation workspace
+
+The stock workspace presents only released lots whose item matches the selected open sales-order line. The server
+still checks quality state, item identity, available quantity and the sales-order revision before it creates a reservation.

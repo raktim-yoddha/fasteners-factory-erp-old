@@ -21,23 +21,24 @@ Supabase session gate, passwordless sign-in surface, first-company bootstrap, re
 Hosted project configuration, user invitations, real factory data, device installation validation and live data-query screens.
 
 ## Planned files/modules
-`src/auth/*`, `src/app/*`, `src/features/dashboard/*`, `supabase/config.toml`, the command-center migration,
-app/integration tests, ADR and product/style/task docs.
+`src/auth/*`, `src/app/*`, `src/features/*`, `src/lib/commandError.ts`, `supabase/config.toml`, the command-center
+migration, app/integration tests, ADR and product/style/task docs.
 
 ## Data migration and authorization implications
 The browser requests a session only; public account creation remains disabled. Permissions continue to be database-owned.
 
 ## Test cases (happy, failure, concurrency, AI-off as relevant)
-The app test asserts that an unconfigured backend cannot expose operations. The hosted Playwright manufacturing path
-exercises passwordless sign-in, bootstrap, master data, commercial, stock and dispatch commands using SAMPLE data;
-it requires a freshly migrated disposable project and approved test user.
+The app test asserts that an unconfigured backend cannot expose operations. Unit tests cover protected-command error
+translation without exposing unknown server details. The hosted Playwright manufacturing path exercises passwordless
+sign-in, bootstrap, master data, commercial, stock and dispatch commands using SAMPLE data; it requires a freshly
+migrated disposable project and approved test user.
 
 ## Implementation notes
 The Command Center reads RLS-scoped live summary counts after sign-in. Browser forms only invoke guarded commands;
 they read current revisions immediately before approval, reservation, preparation and dispatch.
 
 ## Validation evidence (exact command + result)
-`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (26 files, 50 tests passed); `pnpm e2e` (suite loads and
+`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (27 files, 53 tests passed); `pnpm e2e` (suite loads and
 correctly skips without required hosted E2E secrets); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-10.
 
 Hosted database validation on 2026-10-10: ran `tests/integration/hosted-manufacturing-path.sql` through the

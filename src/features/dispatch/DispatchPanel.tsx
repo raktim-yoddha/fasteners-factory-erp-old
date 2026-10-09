@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { CommercialRecords } from '@/features/sales/useCommercialWorkflow'
 import type { DispatchRecords, DispatchShipmentInput, PrepareShipmentInput } from '@/features/dispatch/useDispatchWorkflow'
+import { formatCommandError } from '@/lib/commandError'
 
 type DispatchPanelProps = { companyId: string | null; commercial: CommercialRecords; dispatchRecords: DispatchRecords; busy: boolean; onPrepare: (input: PrepareShipmentInput) => Promise<void>; onDispatch: (input: DispatchShipmentInput) => Promise<void> }
 
@@ -17,7 +18,7 @@ export function DispatchPanel({ companyId, commercial, dispatchRecords, busy, on
   const selectedLineIds = new Set(commercial.salesOrderLines.filter((line) => line.sales_order_id === salesOrderId).map((line) => line.id))
   const usableReservations = dispatchRecords.reservations.filter((reservation) => selectedLineIds.has(reservation.sales_order_line_id) && reservation.quantity > reservation.consumed_quantity)
   const draftShipments = dispatchRecords.shipments.filter((shipment) => shipment.status === 'draft')
-  async function submit(action: () => Promise<void>, success: string) { try { await action(); setMessage(success) } catch (error) { setMessage(error instanceof Error ? error.message : 'The server rejected this operation.') } }
+  async function submit(action: () => Promise<void>, success: string) { try { await action(); setMessage(success) } catch (error) { setMessage(formatCommandError(error, 'the server rejected this dispatch action. Check the selected record and try again.')) } }
 
   return <section className="mt-6 rounded-xl border border-line bg-panel p-5" aria-labelledby="dispatch-title">
     <h3 className="font-bold" id="dispatch-title">Packing and dispatch</h3>
@@ -30,6 +31,6 @@ export function DispatchPanel({ companyId, commercial, dispatchRecords, busy, on
         <h4>2. Dispatch shipment</h4><label className="form-label">Prepared shipment<select className="form-input" required value={shipmentId} onChange={(event) => setShipmentId(event.target.value)}><option value="">Select prepared shipment</option>{draftShipments.map((shipment) => <option key={shipment.id} value={shipment.id}>{shipment.shipment_number}</option>)}</select></label><button className="primary-button" disabled={!companyId || !shipmentId || busy} type="submit">Dispatch shipment</button>
       </form>
     </div>
-    {message ? <p className="mt-4 rounded-lg border border-line bg-canvas p-3 text-sm" role="status">{message}</p> : null}
+    {message ? <p className={message.startsWith('Blocked because') ? 'mt-4 rounded-lg border border-warning bg-warning-surface p-3 text-sm text-warning' : 'mt-4 rounded-lg border border-line bg-canvas p-3 text-sm'} role={message.startsWith('Blocked because') ? 'alert' : 'status'}>{message}</p> : null}
   </section>
 }

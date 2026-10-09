@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { MasterDataOptions } from '@/features/master-data/useMasterDataOptions'
 import type { CommercialRecords, FeasibilityInput, QuotationAcceptanceInput, QuotationApprovalInput, QuotationInput } from '@/features/sales/useCommercialWorkflow'
+import { formatCommandError } from '@/lib/commandError'
 
 type CommercialWorkflowPanelProps = {
   companyId: string | null
@@ -33,7 +34,7 @@ export function CommercialWorkflowPanel({ companyId, items, records, busy, onFea
   const approvedQuotes = records.quotations.filter((quote) => quote.status === 'approved')
   const selectedItem = items.find((item) => item.id === itemId)
 
-  async function submit(action: () => Promise<void>, success: string) { try { await action(); setMessage(success) } catch (error) { setMessage(error instanceof Error ? error.message : 'The server rejected this operation.') } }
+  async function submit(action: () => Promise<void>, success: string) { try { await action(); setMessage(success) } catch (error) { setMessage(formatCommandError(error, 'the server rejected this commercial action. Check the selected record and try again.')) } }
 
   return <section className="mt-6 rounded-xl border border-line bg-panel p-5" aria-labelledby="commercial-workflow-title">
     <h3 className="font-bold" id="commercial-workflow-title">Commercial workflow</h3>
@@ -52,6 +53,6 @@ export function CommercialWorkflowPanel({ companyId, items, records, busy, onFea
         <h4>4. Accept into sales order</h4><label className="form-label">Approved quotation<select className="form-input" required value={acceptanceId} onChange={(event) => setAcceptanceId(event.target.value)}><option value="">Select approved quotation</option>{approvedQuotes.map((quote) => <option key={quote.id} value={quote.id}>{quote.quotation_number}</option>)}</select></label><label className="form-label">Sales order number<input className="form-input" required value={salesOrderNumber} onChange={(event) => setSalesOrderNumber(event.target.value)} /></label><label className="form-label">Customer PO number<input className="form-input" required value={customerPoNumber} onChange={(event) => setCustomerPoNumber(event.target.value)} /></label><button className="primary-button" disabled={!companyId || !acceptanceId || busy} type="submit">Create sales order</button>
       </form>
     </div>
-    {message ? <p className="mt-4 rounded-lg border border-line bg-canvas p-3 text-sm" role="status">{message}</p> : null}
+    {message ? <p className={message.startsWith('Blocked because') ? 'mt-4 rounded-lg border border-warning bg-warning-surface p-3 text-sm text-warning' : 'mt-4 rounded-lg border border-line bg-canvas p-3 text-sm'} role={message.startsWith('Blocked because') ? 'alert' : 'status'}>{message}</p> : null}
   </section>
 }

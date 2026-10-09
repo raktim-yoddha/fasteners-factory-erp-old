@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { MasterDataOptions } from '@/features/master-data/useMasterDataOptions'
 import type { CreateMasterDataCommand } from '@/features/master-data/useCreateMasterData'
+import { formatCommandError } from '@/lib/commandError'
 
 type MasterDataSetupPanelProps = {
   companyId: string | null
@@ -28,7 +29,7 @@ export function MasterDataSetupPanel({ companyId, options, creating, onCreate }:
       await onCreate(command)
       setMessage(success)
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'The server could not create this record.')
+      setMessage(formatCommandError(error, 'the server could not create this record. Check the required details and try again.'))
     }
   }
 
@@ -65,7 +66,7 @@ export function MasterDataSetupPanel({ companyId, options, creating, onCreate }:
           <button className="secondary-button" disabled={!companyId || options.warehouses.length === 0 || creating} type="submit">Create location</button>
         </form>
       </div>
-      {message ? <p className="mt-4 rounded-lg border border-line bg-canvas p-3 text-sm" role="status">{message}</p> : null}
+      {message ? <p className={message.startsWith('Blocked because') ? 'mt-4 rounded-lg border border-warning bg-warning-surface p-3 text-sm text-warning' : 'mt-4 rounded-lg border border-line bg-canvas p-3 text-sm'} role={message.startsWith('Blocked because') ? 'alert' : 'status'}>{message}</p> : null}
     </section>
   )
 }

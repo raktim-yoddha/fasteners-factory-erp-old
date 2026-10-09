@@ -23,6 +23,7 @@ import { useCommercialCommands, useCommercialRecords } from '@/features/sales/us
 import { DispatchPanel } from '@/features/dispatch/DispatchPanel'
 import { useDispatchCommands, useDispatchRecords } from '@/features/dispatch/useDispatchWorkflow'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
+import { formatCommandError } from '@/lib/commandError'
 
 export function AppShell() {
   const { loading, session } = useAuthSession()
@@ -92,7 +93,7 @@ export function AppShell() {
             companyId={activeCompanyId}
             customers={customers.data ?? []}
             creating={createRfq.isPending}
-            error={createRfq.error instanceof Error ? createRfq.error.message : null}
+            error={createRfq.error ? formatCommandError(createRfq.error, 'the RFQ could not be created. Check the required details and try again.') : null}
             onCreate={(input) => createRfq.mutate(input)}
           />
           <CommercialWorkflowPanel
@@ -109,7 +110,7 @@ export function AppShell() {
         setupPanel={
           <InitialCompanyBootstrapPanel
             bootstrapping={bootstrapCompany.isPending}
-            error={bootstrapCompany.error instanceof Error ? bootstrapCompany.error.message : null}
+            error={bootstrapCompany.error ? formatCommandError(bootstrapCompany.error, 'the initial company setup could not be completed.') : null}
             onBootstrap={(input) => bootstrapCompany.mutate(input)}
           />
         }

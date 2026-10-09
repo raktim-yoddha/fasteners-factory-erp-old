@@ -38,3 +38,8 @@ The Command Center now uses one protected read command, authorized by `sales.rea
 independent commercial, reservation, packing and dispatch states. It returns counts of protected records rather than
 adding an aggregate quantity across potentially different UOMs, and it supplies a current next action without
 inventing a factory escalation or block reason.
+
+## Amendment (2026-10-10): Operator-readable command failures
+
+The browser maps known protected-command error codes to English `Blocked because …` guidance and uses an accessible
+alert for failures. Unknown server details are not displayed to operators; they receive a safe retry-oriented message.

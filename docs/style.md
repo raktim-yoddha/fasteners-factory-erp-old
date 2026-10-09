@@ -12,6 +12,8 @@ Explains visual decisions; rules live in `AGENTS.md`. **DESIGN PROPOSAL** until 
 - The initial app is English-only, light theme and uses system UI fonts. No user preference is stored yet.
 - The signed-in workspace uses a compact desktop side navigation that turns into a horizontal touch-safe list on
   phone widths. It never labels unavailable records as sample operational data.
+- Command failures are warning alerts beginning `Blocked because …`; they give a reason in plain English and never
+  expose database error text. Success remains a separate status message.
 
 ## Installed-PWA behavior
 

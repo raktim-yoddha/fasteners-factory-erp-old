@@ -12,7 +12,8 @@ Explains verification strategy; rules live in `AGENTS.md`.
 | `pnpm build` | Vite builds `dist` and generates the service worker/manifest. |
 
 CI runs all four commands on Ubuntu. Unit tests use JSDOM only where a browser DOM is required; repository
-scripts remain Node-environment tests.
+scripts remain Node-environment tests. Command-error unit tests assert that known protected-command failures retain
+their operator meaning while unknown backend details are never rendered.
 
 ## Hosted end-to-end suite
 

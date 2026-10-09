@@ -43,6 +43,10 @@ Domains and table sketch: brief G3 (names are not final). Key shapes: company/pl
 versioned BOM/routing/drawings, append-only `stock_ledger_entries`, `lot_genealogy`, `audit_log`,
 `domain_outbox`, `idempotency_keys`. The ERD goes into `docs/domain-model.md` when L2 starts.
 
+L1 now defines the authorization root: `companies`, `plants`, `profiles`, `company_memberships`,
+`user_company_roles`, role-to-permission mappings and `audit_log`. RLS uses private security-definer helpers;
+business tables and transactional commands are added only after this base is applied and integration-tested.
+
 ## Environments
 Local Supabase (CLI + Docker) for development and migration tests; one hosted project for the pilot.
 Secrets only in Supabase/GitHub secrets, never in the repo. Region and plan: open questions Q1-Q2.

@@ -11,7 +11,7 @@ export default tseslint.config(
   reactHooks.configs.flat.recommended,
   reactRefresh.configs.vite,
   {
-    files: ['scripts/**/*.mjs', 'vite.config.ts'],
+    files: ['scripts/**/*.mjs', 'tests/**/*.mjs', 'vite.config.ts'],
     languageOptions: { globals: globals.node }
   },
   {

@@ -15,28 +15,28 @@ Dispatch packed finished goods through one idempotent command that consumes rese
 - A dispatch writes the signed stock movement, fulfillment result and audit record together.
 
 ## In scope
-Packing and shipment records, shipment lines, read RLS and the dispatch RPC.
+Packing and shipment records, shipment lines, read RLS, the prepare-packing command and the dispatch RPC.
 
 ## Out of scope
-Packing preparation command, carrier integration, tax documents, printed labels and hosted integration tests.
+Carrier integration, tax documents, printed labels and hosted integration tests.
 
 ## Planned files/modules
-`supabase/migrations/20261009173808_packing_shipment_dispatch.sql`, schema test, `docs/domain-model.md`, task board.
+`supabase/migrations/20261009173808_packing_shipment_dispatch.sql`, `supabase/migrations/20261009175618_prepare_packing_shipment.sql`, schema tests, `docs/domain-model.md`, task board.
 
 ## Data migration and authorization implications
-Authenticated callers have read-only access to shipment records. The security-definer dispatch command owns all state, reservation, ledger and audit changes.
+Authenticated callers have read-only access to shipment records. Security-definer commands own packing preparation, shipment state, reservation, ledger and audit changes.
 
 ## Test cases (happy, failure, concurrency, AI-off as relevant)
-Static assertions cover RLS, idempotency, reservation consumption and structured dispatch errors. Hosted tests will cover parallel dispatch attempts.
+Static assertions cover RLS, idempotency, packing preparation, reservation consumption and structured dispatch errors. Hosted tests will cover parallel dispatch attempts.
 
 ## Implementation notes
 Shipping quantity is posted as a negative ledger entry, never by mutating a balance.
 
 ## Validation evidence (exact command + result)
-`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (10 files, 28 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
+`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (16 files, 38 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
 
 ## Docs updated
-`docs/domain-model.md` and `docs/tasks/TASKS.md`.
+`adr/0011-prepared-packing-shipment-command.md`, `docs/architecture.md` and `docs/domain-model.md`.
 
 ## Follow-ups / risks
 Hosted Supabase project creation remains unavailable through the connector's missing cost-confirmation endpoint.

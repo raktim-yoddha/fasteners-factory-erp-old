@@ -64,3 +64,5 @@ revision-checked Quality command that marks a held lot released; it does not rew
 `packing_orders` and `shipments` retain independent state. `dispatch_shipment` locks the shipment, packing order,
 sales order, lots and reservations; it consumes only active reserved quantity, writes signed shipment ledger entries,
 updates the order fulfillment state and creates an audit row as one transaction.
+`prepare_packing_shipment` creates the packed order and draft shipment from one or more validated reservations,
+so the dispatch command has no browser-created state to trust.

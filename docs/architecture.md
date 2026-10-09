@@ -57,6 +57,8 @@ it displays neither client-side fixtures nor a success state until Supabase retu
 
 Finished-goods receipt and QC release are separate stock commands. The receipt creates a held lot and signed ledger
 movement; only a Quality-authorized revision-checked release makes it eligible for reservation (ADR 0010).
+Prepared packing shipments are created atomically from active reservations; dispatch then consumes those exact
+reservation lines through the signed ledger (ADR 0011).
 
 ## Environments
 Local Supabase (CLI + Docker) for development and migration tests; one hosted project for the pilot.

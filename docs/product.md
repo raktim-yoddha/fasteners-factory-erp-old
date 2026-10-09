@@ -8,8 +8,11 @@ tooling, production, WIP, quality, subcontracting, assembly, finished goods, pac
 (the 16-stage backbone, brief Part D). Generic product with fictional demo data first (owner decision);
 Nitin Fasteners is only the reference business and public research basis.
 
+**Product name:** Fasteners Factory ERP (owner decision, ADR 0006). The historic master brief retains
+its initial working title, Fastener Factory OS.
+
 ## MVP target
-- Devices: Windows desktop (installed PWA) and Android phone/tablet (installed PWA). iOS later.
+- Devices: Windows 11 Chrome and Android phone Chrome (installed PWA). iOS later.
 - Backend: hosted Supabase. Network: cloud-first (ADR 0003).
 - MVP = milestones L1-L3 of `docs/roadmap.md`: installable signed-in app, master data and the order thread,
   then one end-to-end happy path (enquiry to shipment from existing finished stock) on SAMPLE data.

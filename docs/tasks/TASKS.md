@@ -2,7 +2,7 @@
 
 | ID | Title | Milestone | Status | Depends on |
 |---|---|---|---|---|
-| TASK-0001 | Foundation: Vite/React/TS/PWA app, Supabase local, real CI scripts | L1 | TODO | - |
+| TASK-0001 | Foundation: Vite/React/TS/PWA app, Supabase local, real CI scripts | L1 | IN_REVIEW | - |
 | TASK-0002 | Auth, roles, permissions, RLS, audit base | L1 | TODO | 0001 |
 | TASK-0003 | Master data (customers, suppliers, items, drawings, locations, work centres) | L2 | TODO | 0002 |
 | TASK-0004 | BOM/routing versioning, global search, Order Command Center skeleton | L2 | TODO | 0003 |

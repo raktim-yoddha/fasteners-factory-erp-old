@@ -25,7 +25,7 @@ and fix that one (and record the decision as an ADR when the rules below require
 
 ## Project Rules
 
-**Product.** Fastener Factory OS: an internal, authenticated, installable PWA that runs a
+**Product.** Fasteners Factory ERP: an internal, authenticated, installable PWA that runs a
 fastener / precision-component factory from sales enquiry to dispatch. MVP targets **Windows
 (installed PWA in Edge/Chrome)** and **Android (installed PWA in Chrome)**. iOS, Electron and React
 Native are out of scope until an ADR says otherwise.

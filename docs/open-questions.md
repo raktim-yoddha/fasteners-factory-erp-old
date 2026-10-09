@@ -4,12 +4,15 @@ Unresolved items. When one is answered, record it (an ADR if the contract's ADR 
 it here. Label: OPEN QUESTION. Nothing here may be hard-coded as fact.
 
 ## Needed before L1 ends
-- Q1 Static PWA host (Cloudflare Pages, Vercel, Netlify, other) and domain name. Default proposal: Cloudflare Pages.
+- Q1 answered: Cloudflare Pages is the static PWA host (ADR 0006). A custom domain remains open; its
+  `pages.dev` URL is sufficient for initial HTTPS install tests.
 - Q2 Supabase plan and region (an India region is likely best for latency). Who owns the account and pays?
-- Q3 Interface language(s): English only, or Hindi/Gujarati labels? Affects i18n from day one.
-- Q4 Android device models and OS versions in use; Windows 10 or 11; browsers (Edge/Chrome).
+- Q3 answered: English only for the initial release (ADR 0006).
+- Q4 answered for the initial release: Windows 11 Chrome and Android phone Chrome. Exact Android model/
+  OS remains needed before device acceptance testing.
 - Q5 Expected users and concurrency for the pilot, SKUs and daily movements.
-- Q6 Scanning hardware: phone camera only, or Bluetooth/USB scanners? Label printer model and label sizes.
+- Q6 deferred: no camera, scanner, Bluetooth/USB hardware or label printer support is in L1. Revisit
+  before L4 warehouse workflows.
 
 ## Needed before the matching milestone
 - Q7 (L3) Currency, tax (GST) treatment and numbering formats for quotes, SO, PO, challans.

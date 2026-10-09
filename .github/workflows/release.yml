@@ -55,12 +55,11 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # The product is a static PWA: attach the built site as one zip. Until TASK-0001 adds a real
-      # app, `pnpm build` is a placeholder that makes no dist/, so there is nothing to attach.
       - run: pnpm build
         shell: bash
       - run: |
-          if [ -d dist ]; then (cd dist && zip -r ../fastener-erp-web.zip .) && gh release upload "$TAG" fastener-erp-web.zip --clobber; else echo "no dist/ yet (docs-only release)"; fi
+          (cd dist && zip -r ../fastener-erp-web.zip .)
+          gh release upload "$TAG" fastener-erp-web.zip --clobber
         shell: bash
 
   publish:

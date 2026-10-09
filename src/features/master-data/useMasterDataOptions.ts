@@ -4,10 +4,14 @@ import { supabase } from '@/lib/supabase'
 
 const plantSchema = z.object({ id: z.uuid(), name: z.string() })
 const warehouseSchema = z.object({ id: z.uuid(), code: z.string(), name: z.string() })
+const itemSchema = z.object({ id: z.uuid(), sku: z.string(), description: z.string(), base_uom: z.enum(['pcs', 'kg', 'm', 'set']) })
+const locationSchema = z.object({ id: z.uuid(), code: z.string(), name: z.string() })
 
 export type MasterDataOptions = {
   plants: z.infer<typeof plantSchema>[]
   warehouses: z.infer<typeof warehouseSchema>[]
+  items: z.infer<typeof itemSchema>[]
+  locations: z.infer<typeof locationSchema>[]
 }
 
 export function useMasterDataOptions(companyId: string | null) {
@@ -16,13 +20,22 @@ export function useMasterDataOptions(companyId: string | null) {
     enabled: Boolean(companyId && supabase),
     queryFn: async (): Promise<MasterDataOptions> => {
       if (!supabase || !companyId) throw new Error('A company is required to load master data.')
-      const [plantsResult, warehousesResult] = await Promise.all([
+      const [plantsResult, warehousesResult, itemsResult, locationsResult] = await Promise.all([
         supabase.from('plants').select('id, name').eq('company_id', companyId).order('name'),
-        supabase.from('warehouses').select('id, code, name').eq('company_id', companyId).eq('active', true).order('name')
+        supabase.from('warehouses').select('id, code, name').eq('company_id', companyId).eq('active', true).order('name'),
+        supabase.from('items').select('id, sku, description, base_uom').eq('company_id', companyId).eq('active', true).order('sku'),
+        supabase.from('stock_locations').select('id, code, name').eq('company_id', companyId).eq('active', true).order('code')
       ])
       if (plantsResult.error) throw plantsResult.error
       if (warehousesResult.error) throw warehousesResult.error
-      return { plants: z.array(plantSchema).parse(plantsResult.data), warehouses: z.array(warehouseSchema).parse(warehousesResult.data) }
+      if (itemsResult.error) throw itemsResult.error
+      if (locationsResult.error) throw locationsResult.error
+      return {
+        plants: z.array(plantSchema).parse(plantsResult.data),
+        warehouses: z.array(warehouseSchema).parse(warehousesResult.data),
+        items: z.array(itemSchema).parse(itemsResult.data),
+        locations: z.array(locationSchema).parse(locationsResult.data)
+      }
     }
   })
 }

@@ -23,11 +23,12 @@ type OperationsWorkspaceProps = {
   salesPanel: ReactNode
   setupPanel: ReactNode
   masterDataPanel: ReactNode
+  stockPanel: ReactNode
   canBootstrap: boolean
 }
 
 export function OperationsWorkspace({
-  email, onSignOut, summary, summaryError, companies, companyId, onCompanyChange, salesPanel, setupPanel, masterDataPanel, canBootstrap
+  email, onSignOut, summary, summaryError, companies, companyId, onCompanyChange, salesPanel, setupPanel, masterDataPanel, stockPanel, canBootstrap
 }: OperationsWorkspaceProps) {
   const [activeModule, setActiveModule] = useState(0)
   const [moduleName, moduleDescription] = modules[activeModule]!
@@ -107,6 +108,7 @@ export function OperationsWorkspace({
           </section>
           {activeModule === 1 ? salesPanel : null}
           {activeModule === 4 ? masterDataPanel : null}
+          {activeModule === 2 ? stockPanel : null}
         </section>
       </div>
     </main>

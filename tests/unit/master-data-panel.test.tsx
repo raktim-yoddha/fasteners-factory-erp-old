@@ -9,7 +9,7 @@ describe('MasterDataSetupPanel', () => {
     render(
       <MasterDataSetupPanel
         companyId="00000000-0000-4000-8000-000000000001"
-        options={{ plants: [], warehouses: [] }}
+        options={{ plants: [], warehouses: [], items: [], locations: [] }}
         creating={false}
         onCreate={onCreate}
       />

@@ -17,6 +17,7 @@ describe('OperationsWorkspace', () => {
         salesPanel={null}
         setupPanel={null}
         masterDataPanel={null}
+        stockPanel={null}
         canBootstrap={false}
       />
     )

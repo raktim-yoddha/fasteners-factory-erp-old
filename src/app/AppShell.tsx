@@ -10,6 +10,9 @@ import { useDashboardSummary } from '@/features/dashboard/useDashboardSummary'
 import { MasterDataSetupPanel } from '@/features/master-data/MasterDataSetupPanel'
 import { useCreateMasterData } from '@/features/master-data/useCreateMasterData'
 import { useMasterDataOptions } from '@/features/master-data/useMasterDataOptions'
+import { StockActionsPanel } from '@/features/stock/StockActionsPanel'
+import { useStockCommands } from '@/features/stock/useStockCommands'
+import { useStockLots } from '@/features/stock/useStockLots'
 import { CreateRfqPanel } from '@/features/sales/CreateRfqPanel'
 import { useCreateRfq } from '@/features/sales/useCreateRfq'
 import { useCustomers } from '@/features/sales/useCustomers'
@@ -29,6 +32,8 @@ export function AppShell() {
   const createRfq = useCreateRfq()
   const masterDataOptions = useMasterDataOptions(activeCompanyId)
   const createMasterData = useCreateMasterData()
+  const stockLots = useStockLots(activeCompanyId)
+  const stockCommands = useStockCommands()
 
   async function requestSignInLink(email: string) {
     if (!supabase) return 'The backend connection is not configured.'
@@ -90,11 +95,12 @@ export function AppShell() {
         masterDataPanel={
           <MasterDataSetupPanel
             companyId={activeCompanyId}
-            options={masterDataOptions.data ?? { plants: [], warehouses: [] }}
+            options={masterDataOptions.data ?? { plants: [], warehouses: [], items: [], locations: [] }}
             creating={createMasterData.isPending}
             onCreate={async (command) => createMasterData.mutateAsync(command)}
           />
         }
+        stockPanel={<StockActionsPanel companyId={activeCompanyId} options={masterDataOptions.data ?? { plants: [], warehouses: [], items: [], locations: [] }} lots={stockLots.data ?? []} receiving={stockCommands.receipt.isPending} releasing={stockCommands.release.isPending} onReceive={async (input) => { await stockCommands.receipt.mutateAsync(input) }} onRelease={async (input) => { await stockCommands.release.mutateAsync(input) }} />}
       />
       <UpdatePrompt />
     </>

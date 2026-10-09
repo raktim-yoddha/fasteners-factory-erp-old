@@ -15,7 +15,7 @@ Deliver an installed-PWA surface that safely connects approved users to ERP work
 - The operational surface is responsive, English-only and does not fabricate factory records.
 
 ## In scope
-Supabase session gate, passwordless sign-in surface, first-company bootstrap, responsive operations navigation, explicit company selection, master-data setup, live summary reads and tests.
+Supabase session gate, passwordless sign-in surface, first-company bootstrap, responsive operations navigation, explicit company selection, master-data and stock setup, live summary reads and tests.
 
 ## Out of scope
 Hosted project configuration, user invitations, real factory data, device installation validation and live data-query screens.

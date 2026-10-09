@@ -59,6 +59,8 @@ warehouse and location creation; material or stateful transitions remain databas
 
 Finished-goods receipt and QC release are separate stock commands. The receipt creates a held lot and signed ledger
 movement; only a Quality-authorized revision-checked release makes it eligible for reservation (ADR 0010).
+The Stock workspace calls those commands through typed adapters and reads lot status through RLS; it never writes a
+ledger row or QC status directly.
 Prepared packing shipments are created atomically from active reservations; dispatch then consumes those exact
 reservation lines through the signed ledger (ADR 0011).
 

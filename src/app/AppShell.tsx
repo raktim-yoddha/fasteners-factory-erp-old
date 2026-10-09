@@ -16,6 +16,8 @@ import { useStockLots } from '@/features/stock/useStockLots'
 import { CreateRfqPanel } from '@/features/sales/CreateRfqPanel'
 import { useCreateRfq } from '@/features/sales/useCreateRfq'
 import { useCustomers } from '@/features/sales/useCustomers'
+import { CommercialWorkflowPanel } from '@/features/sales/CommercialWorkflowPanel'
+import { useCommercialCommands, useCommercialRecords } from '@/features/sales/useCommercialWorkflow'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 
 export function AppShell() {
@@ -30,6 +32,8 @@ export function AppShell() {
     : accessibleCompanies.some((company) => company.id === selectedCompanyId) ? selectedCompanyId : null
   const customers = useCustomers(activeCompanyId)
   const createRfq = useCreateRfq()
+  const commercialRecords = useCommercialRecords(activeCompanyId)
+  const commercialCommands = useCommercialCommands()
   const masterDataOptions = useMasterDataOptions(activeCompanyId)
   const createMasterData = useCreateMasterData()
   const stockLots = useStockLots(activeCompanyId)
@@ -76,7 +80,7 @@ export function AppShell() {
         companyId={activeCompanyId}
         onCompanyChange={setSelectedCompanyId}
         canBootstrap={companies.isSuccess && accessibleCompanies.length === 0}
-        salesPanel={
+        salesPanel={<>
           <CreateRfqPanel
             companyId={activeCompanyId}
             customers={customers.data ?? []}
@@ -84,7 +88,17 @@ export function AppShell() {
             error={createRfq.error instanceof Error ? createRfq.error.message : null}
             onCreate={(input) => createRfq.mutate(input)}
           />
-        }
+          <CommercialWorkflowPanel
+            companyId={activeCompanyId}
+            items={(masterDataOptions.data ?? { plants: [], warehouses: [], items: [], locations: [] }).items}
+            records={commercialRecords.data ?? { rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }}
+            busy={commercialCommands.feasibility.isPending || commercialCommands.quotation.isPending || commercialCommands.approve.isPending || commercialCommands.accept.isPending}
+            onFeasibility={(input) => commercialCommands.feasibility.mutateAsync(input)}
+            onQuotation={(input) => commercialCommands.quotation.mutateAsync(input)}
+            onApprove={(input) => commercialCommands.approve.mutateAsync(input)}
+            onAccept={(input) => commercialCommands.accept.mutateAsync(input)}
+          />
+        </>}
         setupPanel={
           <InitialCompanyBootstrapPanel
             bootstrapping={bootstrapCompany.isPending}

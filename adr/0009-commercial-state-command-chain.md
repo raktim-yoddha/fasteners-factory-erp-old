@@ -17,3 +17,9 @@ locks the changed record, compares the expected revision, writes the audit event
 
 The browser may read commercial records but cannot insert or advance their state directly. A screen must use the
 returned current revision for an approval/acceptance command. The commands use approved BOM/routing IDs only.
+
+## Amendment (2026-10-10): Browser workflow controls
+
+The authenticated operations workspace presents the four commands in sequence and reads each record's current
+revision immediately before submitting it. The first MVP quotation form does not attach engineering revisions;
+when an approved BOM or routing is required, the server remains the enforcing boundary.

@@ -15,28 +15,28 @@ Represent stock as an append-only lot ledger and reserve finished goods without 
 - Concurrent reservations on one lot cannot take available stock below zero.
 
 ## In scope
-Lots, ledger entries, derived positions, reservations, read RLS and the reservation RPC.
+Lots, ledger entries, derived positions, QC-hold receipt/release, reservations, read RLS and the trusted stock commands.
 
 ## Out of scope
-Stock receipt, transfer, adjustment/reversal, reservation release and hosted concurrency execution.
+Stock transfer, adjustment/reversal, reservation release and hosted concurrency execution.
 
 ## Planned files/modules
-`supabase/migrations/20261009173524_stock_ledger_reservations.sql`, schema test, `docs/domain-model.md`, task board.
+`supabase/migrations/20261009173524_stock_ledger_reservations.sql`, `supabase/migrations/20261009175441_stock_receipt_qc_release.sql`, schema tests, `docs/domain-model.md`, task board.
 
 ## Data migration and authorization implications
-Ledger and reservation tables have no direct authenticated write grant. The `reserve_finished_goods` security-definer command checks tenant authorization, revision, QC status, availability and idempotency before writing the reservation and audit log.
+Ledger and reservation tables have no direct authenticated write grant. Receipt creates a held lot, Quality releases it by revision, and `reserve_finished_goods` checks tenant authorization, revision, QC status, availability and idempotency before writing the reservation and audit log.
 
 ## Test cases (happy, failure, concurrency, AI-off as relevant)
-Static assertions cover append-only grants, RLS, derived availability, idempotency lock and explicit reservation errors. Hosted tests will cover duplicate and parallel reservation calls.
+Static assertions cover append-only grants, held-lot receipt/release, RLS, derived availability, idempotency lock and explicit reservation errors. Hosted tests will cover duplicate and parallel reservation calls.
 
 ## Implementation notes
 The lot row is locked during reservation, serializing competing requests for the same lot.
 
 ## Validation evidence (exact command + result)
-`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (9 files, 26 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
+`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (15 files, 36 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
 
 ## Docs updated
-`docs/domain-model.md` and `docs/tasks/TASKS.md`.
+`adr/0010-qc-hold-before-reservation.md`, `docs/architecture.md` and `docs/domain-model.md`.
 
 ## Follow-ups / risks
 Hosted Supabase project creation remains unavailable through the connector's missing cost-confirmation endpoint.

@@ -55,6 +55,9 @@ business tables and transactional commands are added only after this base is app
 The signed-in Command Center begins with a query hook that reads count-only summaries from RLS-scoped tables;
 it displays neither client-side fixtures nor a success state until Supabase returns data.
 
+Finished-goods receipt and QC release are separate stock commands. The receipt creates a held lot and signed ledger
+movement; only a Quality-authorized revision-checked release makes it eligible for reservation (ADR 0010).
+
 ## Environments
 Local Supabase (CLI + Docker) for development and migration tests; one hosted project for the pilot.
 Secrets only in Supabase/GitHub secrets, never in the repo. Region and plan: open questions Q1-Q2.

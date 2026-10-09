@@ -56,6 +56,8 @@ on-hand is the sum of those movements, not a mutable balance. `stock_reservation
 committed to sales-order lines, and `stock_positions` derives on-hand, reserved and available-to-promise.
 The `reserve_finished_goods` command locks the sales order and lot, checks the expected order revision,
 requires a released QC lot, enforces available stock, records an audit row and accepts a caller idempotency key.
+`receive_finished_goods` adds a signed receipt to a QC-hold lot. `release_stock_lot` is a separate
+revision-checked Quality command that marks a held lot released; it does not rewrite ledger history.
 
 ## Packing and dispatch
 

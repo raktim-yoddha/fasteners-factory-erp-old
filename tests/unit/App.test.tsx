@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react'
 import { App } from '@/app/App'
 
 vi.mock('virtual:pwa-register', () => ({ registerSW: vi.fn(() => vi.fn()) }))
+vi.mock('@/lib/supabase', () => ({ isSupabaseConfigured: false, supabase: null }))
 
 describe('App', () => {
   it('does not expose an operational workspace before backend setup', () => {

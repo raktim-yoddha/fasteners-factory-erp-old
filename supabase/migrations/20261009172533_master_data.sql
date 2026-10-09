@@ -7,7 +7,8 @@ create table public.customers (
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (company_id, code)
+  unique (company_id, code),
+  unique (id, company_id)
 );
 
 create table public.suppliers (
@@ -18,7 +19,8 @@ create table public.suppliers (
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (company_id, code)
+  unique (company_id, code),
+  unique (id, company_id)
 );
 
 create table public.items (
@@ -57,6 +59,7 @@ create table public.drawing_revisions (
   approved_by uuid references auth.users(id),
   created_at timestamptz not null default now(),
   unique (drawing_id, revision),
+  unique (id, company_id),
   foreign key (drawing_id, company_id) references public.drawings(id, company_id),
   check ((status = 'approved') = (approved_at is not null and approved_by is not null))
 );
@@ -96,6 +99,7 @@ create table public.work_centres (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (company_id, code),
+  unique (id, company_id),
   foreign key (plant_id, company_id) references public.plants(id, company_id)
 );
 

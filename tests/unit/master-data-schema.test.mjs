@@ -15,4 +15,8 @@ describe('master data migration', () => {
     expect(migration).toContain("raise exception 'APPROVED_REVISION_IMMUTABLE';")
     expect(migration).toContain('before update on public.drawing_revisions')
   })
+
+  it('supports tenant-scoped foreign keys to work centres', () => {
+    expect(migration.match(/unique \(id, company_id\)/g)).toHaveLength(7)
+  })
 })

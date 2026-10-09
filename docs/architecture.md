@@ -63,6 +63,10 @@ The Stock workspace calls those commands through typed adapters and reads lot st
 ledger row or QC status directly.
 Prepared packing shipments are created atomically from active reservations; dispatch then consumes those exact
 reservation lines through the signed ledger (ADR 0011).
+Composite foreign keys that carry a `company_id` require a matching parent composite unique key; work-centre
+routing operations enforce this database-level tenant boundary (ADR 0004 amendment).
+The final command-hardening migration revokes default anonymous execution from every public security-definer
+function. Authenticated command calls still perform their own identity, permission, revision and quantity checks.
 The browser workspace exposes the commercial command chain, matching-item stock reservation and packed-shipment
 dispatch without adding any direct business-table writes. The hosted Playwright suite uses the same browser flow
 against a disposable project, including its passwordless sign-in session (ADR 0013).

@@ -20,3 +20,14 @@ become the end-to-end test list.
 
 More up-front schema and test work, in exchange for traceability and safe concurrency. Concurrency
 tests on the database are mandatory for reservation, issue, receipt, rework, release and dispatch.
+
+## Amendment (2026-10-10): Tenant-scoped work-centre reference
+
+`customers`, `suppliers`, `drawing_revisions` and `work_centres` carry composite `(id, company_id)` keys so
+tenant-scoped foreign keys enforce their company scope in the database. The correction is represented both in the
+original schema for fresh projects and in follow-up migrations for already-created databases.
+
+## Amendment (2026-10-10): Command execution hardening
+
+Every public `SECURITY DEFINER` command explicitly revokes the default `anon` and `PUBLIC` execution privileges.
+Commands remain callable only by the granted authenticated role and still validate `auth.uid()` and tenant permissions.

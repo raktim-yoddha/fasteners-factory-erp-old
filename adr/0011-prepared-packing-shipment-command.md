@@ -18,3 +18,8 @@ separate command that posts the signed stock movement.
 The command supports one or more reservation lines per shipment and prevents unconsumed reservation quantity from
 being packed more than once. Packing confirmation is represented by the command itself for this MVP; labels and
 carrier documents remain later work.
+
+## Amendment (2026-10-10): Dispatch workspace
+
+The dispatch workspace allows an operator to choose an open sales order, an active reservation on one of its lines,
+and a matching preparation quantity. It displays only draft shipments for gate-out; commands remain the only writer.

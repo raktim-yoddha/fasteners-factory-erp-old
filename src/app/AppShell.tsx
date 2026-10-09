@@ -18,6 +18,8 @@ import { useCreateRfq } from '@/features/sales/useCreateRfq'
 import { useCustomers } from '@/features/sales/useCustomers'
 import { CommercialWorkflowPanel } from '@/features/sales/CommercialWorkflowPanel'
 import { useCommercialCommands, useCommercialRecords } from '@/features/sales/useCommercialWorkflow'
+import { DispatchPanel } from '@/features/dispatch/DispatchPanel'
+import { useDispatchCommands, useDispatchRecords } from '@/features/dispatch/useDispatchWorkflow'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 
 export function AppShell() {
@@ -34,6 +36,8 @@ export function AppShell() {
   const createRfq = useCreateRfq()
   const commercialRecords = useCommercialRecords(activeCompanyId)
   const commercialCommands = useCommercialCommands()
+  const dispatchRecords = useDispatchRecords(activeCompanyId)
+  const dispatchCommands = useDispatchCommands()
   const masterDataOptions = useMasterDataOptions(activeCompanyId)
   const createMasterData = useCreateMasterData()
   const stockLots = useStockLots(activeCompanyId)
@@ -115,6 +119,7 @@ export function AppShell() {
           />
         }
         stockPanel={<StockActionsPanel companyId={activeCompanyId} options={masterDataOptions.data ?? { plants: [], warehouses: [], items: [], locations: [] }} lots={stockLots.data ?? []} records={commercialRecords.data ?? { rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }} receiving={stockCommands.receipt.isPending} releasing={stockCommands.release.isPending} reserving={stockCommands.reserve.isPending} onReceive={async (input) => { await stockCommands.receipt.mutateAsync(input) }} onRelease={async (input) => { await stockCommands.release.mutateAsync(input) }} onReserve={async (input) => { await stockCommands.reserve.mutateAsync(input) }} />}
+        dispatchPanel={<DispatchPanel companyId={activeCompanyId} commercial={commercialRecords.data ?? { rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }} dispatchRecords={dispatchRecords.data ?? { reservations: [], shipments: [] }} busy={dispatchCommands.prepare.isPending || dispatchCommands.dispatch.isPending} onPrepare={(input) => dispatchCommands.prepare.mutateAsync(input)} onDispatch={(input) => dispatchCommands.dispatch.mutateAsync(input)} />}
       />
       <UpdatePrompt />
     </>

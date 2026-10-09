@@ -19,12 +19,13 @@ describe('OperationsWorkspace', () => {
         masterDataPanel={null}
         stockPanel={null}
         dispatchPanel={null}
+        commandCenterPanel={null}
         canBootstrap={false}
       />
     )
 
     expect(screen.getByText('2')).toBeVisible()
     expect(screen.getByText('5')).toBeVisible()
-    expect(screen.getAllByText('Not connected in this MVP')).toHaveLength(2)
+    expect(screen.queryByText('Not connected in this MVP')).not.toBeInTheDocument()
   })
 })

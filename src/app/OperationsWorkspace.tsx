@@ -25,11 +25,12 @@ type OperationsWorkspaceProps = {
   masterDataPanel: ReactNode
   stockPanel: ReactNode
   dispatchPanel: ReactNode
+  commandCenterPanel: ReactNode
   canBootstrap: boolean
 }
 
 export function OperationsWorkspace({
-  email, onSignOut, summary, summaryError, companies, companyId, onCompanyChange, salesPanel, setupPanel, masterDataPanel, stockPanel, dispatchPanel, canBootstrap
+  email, onSignOut, summary, summaryError, companies, companyId, onCompanyChange, salesPanel, setupPanel, masterDataPanel, stockPanel, dispatchPanel, commandCenterPanel, canBootstrap
 }: OperationsWorkspaceProps) {
   const [activeModule, setActiveModule] = useState(0)
   const [moduleName, moduleDescription] = modules[activeModule]!
@@ -97,16 +98,15 @@ export function OperationsWorkspace({
               ['Open RFQs', summary?.rfqs],
               ['Sales orders', summary?.salesOrders],
               ['Available lots', summary?.availableLots],
-              ['Shipments', summary?.shipments],
-              ['Quality release', undefined],
-              ['Audit trail', undefined]
+              ['Shipments', summary?.shipments]
             ].map(([label, count]) => (
               <article className="rounded-xl border border-line bg-panel p-4" key={label}>
                 <p className="text-sm font-semibold">{label}</p>
-                <p className="mt-2 text-sm text-muted">{typeof count === 'number' ? count : 'Not connected in this MVP'}</p>
+                <p className="mt-2 text-sm text-muted">{typeof count === 'number' ? count : 'Loading…'}</p>
               </article>
             ))}
           </section>
+          {activeModule === 0 ? commandCenterPanel : null}
           {activeModule === 1 ? salesPanel : null}
           {activeModule === 4 ? masterDataPanel : null}
           {activeModule === 2 ? stockPanel : null}

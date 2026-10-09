@@ -51,7 +51,7 @@ export function useCommercialRecords(companyId: string | null) {
 
 export function useCommercialCommands() {
   const queryClient = useQueryClient()
-  const invalidate = async () => { await Promise.all(['commercial-records', 'dashboard-summary'].map((key) => queryClient.invalidateQueries({ queryKey: [key] }))) }
+  const invalidate = async () => { await Promise.all(['commercial-records', 'dashboard-summary', 'order-command-center'].map((key) => queryClient.invalidateQueries({ queryKey: [key] }))) }
   const feasibility = useMutation({ mutationFn: async (input: FeasibilityInput) => {
     if (!supabase) throw new Error('Supabase is not configured.')
     const request = feasibilitySchema.parse(input)

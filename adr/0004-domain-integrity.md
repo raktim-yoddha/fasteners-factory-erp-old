@@ -31,3 +31,10 @@ original schema for fresh projects and in follow-up migrations for already-creat
 
 Every public `SECURITY DEFINER` command explicitly revokes the default `anon` and `PUBLIC` execution privileges.
 Commands remain callable only by the granted authenticated role and still validate `auth.uid()` and tenant permissions.
+
+## Amendment (2026-10-10): Read-only Order Command Center
+
+The Command Center now uses one protected read command, authorized by `sales.read`, to return each sales order's
+independent commercial, reservation, packing and dispatch states. It returns counts of protected records rather than
+adding an aggregate quantity across potentially different UOMs, and it supplies a current next action without
+inventing a factory escalation or block reason.

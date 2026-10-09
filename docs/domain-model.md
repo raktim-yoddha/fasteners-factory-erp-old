@@ -68,3 +68,10 @@ sales order, lots and reservations; it consumes only active reserved quantity, w
 updates the order fulfillment state and creates an audit row as one transaction.
 `prepare_packing_shipment` creates the packed order and draft shipment from one or more validated reservations,
 so the dispatch command has no browser-created state to trust.
+
+## Order Command Center
+
+`get_order_command_center` is a protected read command for users with `sales.read`. It joins the existing,
+independently-stateful sales-order, reservation, packing and shipment records server-side and returns status labels,
+record counts and the next action. It deliberately does not total quantities across an order, because an order can
+contain lines with different UOMs.

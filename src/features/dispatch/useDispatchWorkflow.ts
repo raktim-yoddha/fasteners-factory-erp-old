@@ -31,7 +31,7 @@ export function useDispatchRecords(companyId: string | null) {
 
 export function useDispatchCommands() {
   const queryClient = useQueryClient()
-  const invalidate = async () => { await Promise.all(['dispatch-records', 'commercial-records', 'stock-lots', 'dashboard-summary'].map((key) => queryClient.invalidateQueries({ queryKey: [key] }))) }
+  const invalidate = async () => { await Promise.all(['dispatch-records', 'commercial-records', 'stock-lots', 'dashboard-summary', 'order-command-center'].map((key) => queryClient.invalidateQueries({ queryKey: [key] }))) }
   const prepare = useMutation({ mutationFn: async (input: PrepareShipmentInput) => {
     if (!supabase) throw new Error('Supabase is not configured.')
     const request = prepareSchema.parse(input)

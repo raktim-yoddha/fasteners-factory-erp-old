@@ -12,7 +12,7 @@ export type StockReservationInput = z.input<typeof reservationSchema>
 
 export function useStockCommands() {
   const queryClient = useQueryClient()
-  const invalidate = async () => { await Promise.all(['stock-lots', 'dashboard-summary', 'commercial-records', 'dispatch-records'].map((key) => queryClient.invalidateQueries({ queryKey: [key] }))) }
+  const invalidate = async () => { await Promise.all(['stock-lots', 'dashboard-summary', 'commercial-records', 'dispatch-records', 'order-command-center'].map((key) => queryClient.invalidateQueries({ queryKey: [key] }))) }
   const receipt = useMutation({
     mutationFn: async (input: StockReceiptInput) => {
       if (!supabase) throw new Error('Supabase is not configured.')

@@ -52,8 +52,9 @@ L1 now defines the authorization root: `companies`, `plants`, `profiles`, `compa
 `user_company_roles`, role-to-permission mappings and `audit_log`. RLS uses private security-definer helpers;
 business tables and transactional commands are added only after this base is applied and integration-tested.
 
-The signed-in Command Center begins with a query hook that reads count-only summaries from RLS-scoped tables;
-it displays neither client-side fixtures nor a success state until Supabase returns data.
+The signed-in Command Center reads company-scoped summary counts and a protected `get_order_command_center` query.
+The latter is a read-only, sales-authorized boundary that reports independent commercial, reservation, packing and
+dispatch states without relying on browser-side joins or unit-unsafe quantity aggregation.
 The master-data setup feature uses small typed browser adapters for single-table, RLS-protected customer, item,
 warehouse and location creation; material or stateful transitions remain database commands.
 

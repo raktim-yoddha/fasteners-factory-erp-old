@@ -19,3 +19,8 @@ shows no operational data until a valid session and the configured backend are b
 There is no public self-registration or browser-side role assignment. The hosted Supabase project must allow its
 deployed URL as an auth redirect URL and administrators must provision users before their first sign-in. SSO or a
 different identity provider can supersede this decision in a future ADR.
+
+## Amendment (2026-10-10): Closed project defaults
+
+The committed Supabase configuration now disables both root and email sign-up defaults. The hosted project must use
+the same setting; its first approved operator is created by an administrator, not by a browser request.

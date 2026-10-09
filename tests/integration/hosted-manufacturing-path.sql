@@ -9,6 +9,13 @@ insert into auth.users (
   now(), '{"provider":"email","providers":["email"]}', '{"display_name":"SAMPLE Operator"}', now(), now()
 );
 
+insert into auth.users (
+  id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+) values (
+  '22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'sample.unauthorized@invalid.test',
+  now(), '{"provider":"email","providers":["email"]}', '{"display_name":"SAMPLE Unauthorized"}', now(), now()
+);
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -29,6 +36,8 @@ declare
   v_reservation_id uuid;
   v_shipment_id uuid;
   v_on_hand numeric;
+  v_stock_status text;
+  v_packing_dispatch_status text;
 begin
   select public.bootstrap_initial_company('SAMPLE Factory', 'SAMPLE Plant') into v_company_id;
   select id into v_plant_id from public.plants where company_id = v_company_id;
@@ -46,10 +55,14 @@ begin
   perform public.approve_quotation(v_company_id, v_quotation_id, 1, 'sample-approval-001');
   select public.accept_quotation_create_sales_order(v_company_id, v_quotation_id, 'SAMPLE-SO-001', 'SAMPLE-PO-001', current_date + 14, 2, 'sample-sales-order-001') into v_sales_order_id;
   select id into v_sales_order_line_id from public.sales_order_lines where sales_order_id = v_sales_order_id;
+  select stock_status into v_stock_status from public.get_order_command_center(v_company_id) where sales_order_id = v_sales_order_id;
+  if v_stock_status <> 'awaiting reservation' then raise exception 'SAMPLE_COMMAND_CENTER_INITIAL_STATUS_UNEXPECTED'; end if;
 
   select public.receive_finished_goods(v_company_id, v_item_id, v_location_id, 'SAMPLE-LOT-001', 10, 'pcs', 'sample-receipt-001') into v_lot_id;
   perform public.release_stock_lot(v_company_id, v_lot_id, 1, 'sample-release-001');
   select public.reserve_finished_goods(v_company_id, v_sales_order_line_id, v_lot_id, 10, 1, 'sample-reservation-001') into v_reservation_id;
+  select stock_status into v_stock_status from public.get_order_command_center(v_company_id) where sales_order_id = v_sales_order_id;
+  if v_stock_status <> 'reserved' then raise exception 'SAMPLE_COMMAND_CENTER_RESERVATION_STATUS_UNEXPECTED'; end if;
   select public.prepare_packing_shipment(v_company_id, v_sales_order_id, 'SAMPLE-PACK-001', 'SAMPLE-SHIP-001',
     jsonb_build_array(jsonb_build_object('reservation_id', v_reservation_id, 'quantity', 10)), 2, 'sample-packing-001') into v_shipment_id;
   perform public.dispatch_shipment(v_company_id, v_shipment_id, 1, 'sample-dispatch-001');
@@ -61,6 +74,18 @@ begin
   if v_on_hand <> 0 then
     raise exception 'SAMPLE_LEDGER_BALANCE_UNEXPECTED';
   end if;
+  select stock_status, packing_dispatch_status into v_stock_status, v_packing_dispatch_status
+  from public.get_order_command_center(v_company_id) where sales_order_id = v_sales_order_id;
+  if v_stock_status <> 'fulfilled' or v_packing_dispatch_status <> 'fulfilled' then
+    raise exception 'SAMPLE_COMMAND_CENTER_DISPATCH_STATUS_UNEXPECTED';
+  end if;
+  perform set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+  begin
+    perform public.get_order_command_center(v_company_id);
+    raise exception 'SAMPLE_COMMAND_CENTER_UNAUTHORIZED_READ_ALLOWED';
+  exception when others then
+    if sqlerrm <> 'FORBIDDEN' then raise; end if;
+  end;
 end;
 $$;
 

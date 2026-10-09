@@ -29,3 +29,10 @@ erDiagram
 `work_centres` are all company-scoped. Item, partner, warehouse and work-centre codes are unique inside the
 company. A drawing revision belongs to the same company as its drawing and item. Once a revision is approved,
 the database rejects every update; a replacement revision must be created instead.
+
+## Engineering versions
+
+`boms` and `routings` select an output item; their revisions are identified by immutable IDs. `bom_lines` keep
+component quantity, UOM and scrap allowance as database numerics. `routing_operations` keep ordered work-centre
+steps and numeric setup/run minutes. Approved headers reject updates and private draft checks block line/operation
+mutation, so later commercial and production records can pin a revision without historical drift.

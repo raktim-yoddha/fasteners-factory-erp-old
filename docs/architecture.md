@@ -19,16 +19,8 @@ flowchart TB
   DB --> Q[Outbox / Queues / Cron]
   EF -.->|L8 only, flagged| AI[AI provider]
 ```
-Factory Wi-Fi only needs to reach the internet. If pilots show it cannot, Plan B moves the same Supabase
-code to a factory LAN server with local HTTPS (ADR 0003).
-
-## Wi-Fi / LAN answer (owner question)
-| | Cloud (chosen) | Factory LAN server (later option) |
-|---|---|---|
-| Works without internet | no | yes |
-| Operate | Supabase manages | factory runs PC, backups, updates, UPS |
-| HTTPS for install and camera scan | automatic | local certificate on every device |
-| Effort | lowest | highest |
+Factory Wi-Fi only needs to reach the internet. Why cloud and not a factory LAN server, and when to
+revisit: `adr/0003-installed-pwa-cloud-first-network.md`.
 
 ## Code layout (target; created by TASK-0001)
 `src/app` shell and routes, `src/features/<module>`, `src/components/ui`, `src/shared`, `src/lib`

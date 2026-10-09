@@ -46,6 +46,10 @@
 
   .form-input { @apply min-h-11 rounded-lg border border-line bg-panel px-3 text-base font-normal text-ink; }
 
+  .master-form { @apply grid gap-3 rounded-lg border border-line bg-canvas p-4; }
+
+  .master-form h4 { @apply text-sm font-bold; }
+
   .status {
     @apply inline-flex min-h-11 items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold;
   }

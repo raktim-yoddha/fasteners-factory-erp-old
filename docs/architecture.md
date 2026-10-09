@@ -54,6 +54,8 @@ business tables and transactional commands are added only after this base is app
 
 The signed-in Command Center begins with a query hook that reads count-only summaries from RLS-scoped tables;
 it displays neither client-side fixtures nor a success state until Supabase returns data.
+The master-data setup feature uses small typed browser adapters for single-table, RLS-protected customer, item,
+warehouse and location creation; material or stateful transitions remain database commands.
 
 Finished-goods receipt and QC release are separate stock commands. The receipt creates a held lot and signed ledger
 movement; only a Quality-authorized revision-checked release makes it eligible for reservation (ADR 0010).

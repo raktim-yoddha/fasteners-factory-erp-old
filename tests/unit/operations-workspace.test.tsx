@@ -16,6 +16,7 @@ describe('OperationsWorkspace', () => {
         onCompanyChange={vi.fn()}
         salesPanel={null}
         setupPanel={null}
+        masterDataPanel={null}
         canBootstrap={false}
       />
     )

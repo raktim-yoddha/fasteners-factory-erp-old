@@ -7,6 +7,9 @@ import { useAccessibleCompanies } from '@/features/company/useAccessibleCompanie
 import { InitialCompanyBootstrapPanel } from '@/features/company/InitialCompanyBootstrapPanel'
 import { useInitialCompanyBootstrap } from '@/features/company/useInitialCompanyBootstrap'
 import { useDashboardSummary } from '@/features/dashboard/useDashboardSummary'
+import { MasterDataSetupPanel } from '@/features/master-data/MasterDataSetupPanel'
+import { useCreateMasterData } from '@/features/master-data/useCreateMasterData'
+import { useMasterDataOptions } from '@/features/master-data/useMasterDataOptions'
 import { CreateRfqPanel } from '@/features/sales/CreateRfqPanel'
 import { useCreateRfq } from '@/features/sales/useCreateRfq'
 import { useCustomers } from '@/features/sales/useCustomers'
@@ -24,6 +27,8 @@ export function AppShell() {
     : accessibleCompanies.some((company) => company.id === selectedCompanyId) ? selectedCompanyId : null
   const customers = useCustomers(activeCompanyId)
   const createRfq = useCreateRfq()
+  const masterDataOptions = useMasterDataOptions(activeCompanyId)
+  const createMasterData = useCreateMasterData()
 
   async function requestSignInLink(email: string) {
     if (!supabase) return 'The backend connection is not configured.'
@@ -80,6 +85,14 @@ export function AppShell() {
             bootstrapping={bootstrapCompany.isPending}
             error={bootstrapCompany.error instanceof Error ? bootstrapCompany.error.message : null}
             onBootstrap={(input) => bootstrapCompany.mutate(input)}
+          />
+        }
+        masterDataPanel={
+          <MasterDataSetupPanel
+            companyId={activeCompanyId}
+            options={masterDataOptions.data ?? { plants: [], warehouses: [] }}
+            creating={createMasterData.isPending}
+            onCreate={async (command) => createMasterData.mutateAsync(command)}
           />
         }
       />

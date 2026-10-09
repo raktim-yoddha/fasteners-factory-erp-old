@@ -42,6 +42,10 @@
 
   .nav-item-active { @apply bg-canvas text-ink; }
 
+  .form-label { @apply grid gap-2 text-sm font-semibold text-ink; }
+
+  .form-input { @apply min-h-11 rounded-lg border border-line bg-panel px-3 text-base font-normal text-ink; }
+
   .status {
     @apply inline-flex min-h-11 items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold;
   }

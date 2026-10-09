@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
+import type { AccessibleCompany } from '@/features/company/useAccessibleCompanies'
 import type { DashboardSummary } from '@/features/dashboard/useDashboardSummary'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
@@ -15,9 +17,15 @@ type OperationsWorkspaceProps = {
   onSignOut: () => Promise<void>
   summary: DashboardSummary | undefined
   summaryError: boolean
+  companies: AccessibleCompany[]
+  companyId: string | null
+  onCompanyChange: (companyId: string) => void
+  salesPanel: ReactNode
 }
 
-export function OperationsWorkspace({ email, onSignOut, summary, summaryError }: OperationsWorkspaceProps) {
+export function OperationsWorkspace({
+  email, onSignOut, summary, summaryError, companies, companyId, onCompanyChange, salesPanel
+}: OperationsWorkspaceProps) {
   const [activeModule, setActiveModule] = useState(0)
   const [moduleName, moduleDescription] = modules[activeModule]!
 
@@ -62,6 +70,12 @@ export function OperationsWorkspace({ email, onSignOut, summary, summaryError }:
               {isSupabaseConfigured ? 'Backend connected' : 'Backend setup required'}
             </span>
           </div>
+          <label className="form-label mt-5 max-w-sm">Active company
+            <select className="form-input" value={companyId ?? ''} onChange={(event) => onCompanyChange(event.target.value)}>
+              <option value="">{companies.length === 0 ? 'No accessible company' : 'Select company'}</option>
+              {companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
+            </select>
+          </label>
           <section className="mt-6 rounded-xl border border-line bg-panel p-5" aria-labelledby="records-title">
             <h3 className="font-bold" id="records-title">{summaryError ? 'Records could not be loaded' : 'Live company records'}</h3>
             <p className="mt-2 max-w-prose text-sm leading-6 text-muted">
@@ -87,6 +101,7 @@ export function OperationsWorkspace({ email, onSignOut, summary, summaryError }:
               </article>
             ))}
           </section>
+          {activeModule === 1 ? salesPanel : null}
         </section>
       </div>
     </main>

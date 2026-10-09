@@ -27,7 +27,8 @@ Only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are browser configu
 keys and database passwords remain server-side. See ADR 0006.
 
 ## Code layout
-`src/app` owns providers, routes and the shell; `src/pwa` owns install, update and network-status UI;
+`src/app` owns providers, routes and the shell; `src/auth` owns the session listener and sign-in presentation;
+`src/pwa` owns install, update and network-status UI;
 `src/lib` owns the Supabase client boundary; `src/components/ui` is reserved for shadcn/ui primitives;
 future features live in `src/features/<module>`. `supabase/migrations` holds CLI-generated migrations;
 `tests/{unit,integration,e2e,fixtures}` separates verification by scope.
@@ -54,3 +55,6 @@ Secrets only in Supabase/GitHub secrets, never in the repo. Region and plan: ope
 ## Trust boundaries
 Browser (untrusted) -> Supabase Auth JWT -> RLS and commands (trusted). Service-role key only inside Edge
 Functions. AI provider is a further boundary, absent until L8.
+
+The browser can request a passwordless sign-in link only for an existing approved account; the call disables
+automatic user creation. No role, membership or company bootstrap is trusted to browser code (ADR 0007).

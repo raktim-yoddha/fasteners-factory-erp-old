@@ -6,11 +6,10 @@ import { App } from '@/app/App'
 vi.mock('virtual:pwa-register', () => ({ registerSW: vi.fn(() => vi.fn()) }))
 
 describe('App', () => {
-  it('renders the signed-out installable shell', () => {
+  it('does not expose an operational workspace before backend setup', () => {
     render(<App />)
 
-    expect(screen.getByRole('heading', { name: 'Fasteners Factory ERP' })).toBeVisible()
-    expect(screen.getByRole('status')).toHaveTextContent('Online')
-    expect(screen.getByRole('heading', { name: 'Install this workspace' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: /fasteners factory erp/i })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Backend setup is required.' })).toBeVisible()
   })
 })

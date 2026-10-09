@@ -10,6 +10,8 @@ Explains visual decisions; rules live in `AGENTS.md`. **DESIGN PROPOSAL** until 
 - Minimum interactive target is 44px. Keyboard focus is visible and every action uses a semantic button.
 - The shell supports 320px-wide Android screens through desktop widths without horizontal scrolling.
 - The initial app is English-only, light theme and uses system UI fonts. No user preference is stored yet.
+- The signed-in workspace uses a compact desktop side navigation that turns into a horizontal touch-safe list on
+  phone widths. It never labels unavailable records as sample operational data.
 
 ## Installed-PWA behavior
 

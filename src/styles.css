@@ -9,6 +9,8 @@
   --color-brand: #334155;
   --color-safe: #166534;
   --color-warning: #9a3412;
+  --color-safe-surface: #f0fdf4;
+  --color-warning-surface: #fff7ed;
 }
 
 @layer base {
@@ -28,12 +30,24 @@
     @apply min-h-11 cursor-pointer rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700;
   }
 
+  .primary-button:disabled { @apply cursor-not-allowed opacity-60; }
+
+  .secondary-button {
+    @apply min-h-11 cursor-pointer rounded-lg border border-line bg-panel px-3 py-2 text-sm font-semibold text-ink hover:bg-canvas;
+  }
+
+  .nav-item {
+    @apply min-h-11 shrink-0 cursor-pointer rounded-lg px-3 py-2 text-left text-sm font-semibold text-muted hover:bg-canvas hover:text-ink;
+  }
+
+  .nav-item-active { @apply bg-canvas text-ink; }
+
   .status {
     @apply inline-flex min-h-11 items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold;
   }
 
-  .status-online { @apply border-green-700 bg-green-50 text-safe; }
-  .status-offline { @apply border-orange-800 bg-orange-50 text-warning; }
+  .status-online { @apply border-safe bg-safe-surface text-safe; }
+  .status-offline { @apply border-warning bg-warning-surface text-warning; }
 }
 
 @media (prefers-reduced-motion: reduce) {

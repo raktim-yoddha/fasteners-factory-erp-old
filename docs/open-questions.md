@@ -6,7 +6,8 @@ it here. Label: OPEN QUESTION. Nothing here may be hard-coded as fact.
 ## Needed before L1 ends
 - Q1 answered: Cloudflare Pages is the static PWA host (ADR 0006). A custom domain remains open; its
   `pages.dev` URL is sufficient for initial HTTPS install tests.
-- Q2 Supabase plan and region (an India region is likely best for latency). Who owns the account and pays?
+- Q2 answered: a cloud Supabase project is provisioned in `ap-northeast-1`. Validate plant latency before the
+  pilot; billing ownership remains with the product owner.
 - Q3 answered: English only for the initial release (ADR 0006).
 - Q4 answered for the initial release: Windows 11 Chrome and Android phone Chrome. Exact Android model/
   OS remains needed before device acceptance testing.

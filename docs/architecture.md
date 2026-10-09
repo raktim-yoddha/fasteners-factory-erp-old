@@ -75,6 +75,7 @@ against a disposable project, including its passwordless sign-in session (ADR 00
 Cloud Supabase is the only required backend environment; no local Docker Supabase setup is required for this MVP.
 A separate disposable hosted project or database branch is used for end-to-end verification, never production.
 Secrets only in Supabase/GitHub secrets, never in the repo. Region and plan: open questions Q1-Q2.
+Hosted setup steps, Auth redirect requirements and Cloudflare Pages build variables are in `docs/deployment.md`.
 
 ## Trust boundaries
 Browser (untrusted) -> Supabase Auth JWT -> RLS and commands (trusted). Service-role key only inside Edge

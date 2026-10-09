@@ -2,7 +2,7 @@
 
 | ID | Title | Milestone | Status | Depends on |
 |---|---|---|---|---|
-| TASK-0001 | Foundation: Vite/React/TS/PWA app, Supabase local, real CI scripts | L1 | IN_REVIEW | - |
+| TASK-0001 | Foundation: Vite/React/TS/PWA app, cloud Supabase, real CI scripts | L1 | IN_REVIEW | - |
 | TASK-0002 | Auth, roles, permissions, RLS, audit base | L1 | IN_PROGRESS | 0001 |
 | TASK-0003 | Master data (customers, suppliers, items, drawings, locations, work centres) | L2 | IN_PROGRESS | 0002 |
 | TASK-0004 | BOM/routing versioning, global search, Order Command Center skeleton | L2 | IN_PROGRESS | 0003 |
@@ -11,4 +11,4 @@
 | TASK-0007 | Packing, shipment, dispatch with idempotency | L3 | IN_PROGRESS | 0005, 0006 |
 | TASK-0008 | MVP demo on Windows + Android, hardening, acceptance run | L3 | IN_PROGRESS | 0007 |
 
-Only TASK-0001 has a spec file so far. Write the next spec just before starting it.
+Every active task has a spec file. Do not mark a task done until its recorded hosted validation and device evidence exist.

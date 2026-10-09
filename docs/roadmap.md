@@ -6,7 +6,7 @@ Status of individual tasks lives in `docs/tasks/TASKS.md`.
 | Milestone | Outcome | Needs from owner |
 |---|---|---|
 | L0 Discovery | Real routes, UOMs, approvals confirmed or marked assumed; fictional dataset | answers to `docs/open-questions.md` |
-| **L1 Foundation (MVP)** | Vite/React/PWA app installs on Windows and Android; Supabase local + hosted; Auth, roles, RLS; app shell; CI real | hosting accounts |
+| **L1 Foundation (MVP)** | Vite/React/PWA app installs on Windows and Android; cloud Supabase; Auth, roles, RLS; app shell; CI real | hosting accounts |
 | **L2 Master data + order thread (MVP)** | Customers, suppliers, items, drawings, warehouses, work centres, BOM/routing versions, global search, audit, Order Command Center skeleton | review of SAMPLE data |
 | **L3 First slice (MVP)** | RFQ -> feasibility -> quote -> PO match -> sales order -> reserve finished stock -> pack -> ship, on SAMPLE data | demo review |
 | L4 Material | MRP basics, PO, GRN, lots, QC hold, ledger, reserve/pick/issue, barcode scanning, concurrency tests | scanner/label decision |

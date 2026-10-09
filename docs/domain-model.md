@@ -36,3 +36,10 @@ the database rejects every update; a replacement revision must be created instea
 component quantity, UOM and scrap allowance as database numerics. `routing_operations` keep ordered work-centre
 steps and numeric setup/run minutes. Approved headers reject updates and private draft checks block line/operation
 mutation, so later commercial and production records can pin a revision without historical drift.
+
+## Commercial order thread
+
+`rfqs`, `feasibility_reviews`, `quotations` and `sales_orders` each hold their own status. Lines carry exact
+`NUMERIC` quantities, explicit UOM, and monetary prices with currency held on the quotation. Feasibility, quote
+and sales-order lines can pin the relevant drawing, BOM and routing revision IDs rather than resolving a newer
+engineering revision later.

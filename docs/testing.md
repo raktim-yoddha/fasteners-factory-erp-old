@@ -30,8 +30,9 @@ bootstrap is correctly one-time, so each run needs a new migrated project or dis
 
 `tests/integration/hosted-manufacturing-path.sql` is a transaction-based companion for an empty hosted test project
 or branch. It runs every protected factory command as a simulated authenticated SAMPLE operator, asserts dispatch,
-the resulting zero lot balance, the Order Command Center's initial, reserved and fulfilled states, and denial for an
-authenticated user without a company role, then rolls back. It never leaves users, companies, lots or ledger entries behind.
+the resulting zero lot balance, duplicate reservation and dispatch idempotency, rejected oversell, Order Command
+Center state changes, and denial for an authenticated user without a company role, then rolls back. It never leaves
+users, companies, lots or ledger entries behind.
 
 ## Manual L1 evidence
 

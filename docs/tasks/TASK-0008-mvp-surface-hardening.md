@@ -43,9 +43,10 @@ correctly skips without required hosted E2E secrets); `pnpm build` (pass); `git 
 
 Hosted database validation on 2026-10-10: ran `tests/integration/hosted-manufacturing-path.sql` through the
 connected Supabase project. The command path completed and rolled back, including Order Command Center states before
-reservation, after reservation and after dispatch, plus denial for an authenticated user without a company role; a
-follow-up count confirmed zero Auth, company, order, shipment and ledger rows remained. The new command is unavailable
-to `anon` and callable by `authenticated` only.
+reservation, after reservation and after dispatch; an unauthorized quotation approval; idempotent reservation and
+dispatch retries; and a rejected oversell after a current revision read. A follow-up count confirmed zero Auth,
+company, order, shipment and ledger rows remained. The new command is unavailable to `anon` and callable by
+`authenticated` only.
 
 ## Docs updated
 `adr/0004-domain-integrity.md`, `adr/0007-passwordless-approved-user-sign-in.md`, `adr/0012-initial-tenant-bootstrap.md`, `adr/0013-hosted-end-to-end-verification.md`, `docs/architecture.md`, `docs/domain-model.md`, `docs/security.md`, `docs/testing.md` and this task record.

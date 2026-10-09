@@ -4,6 +4,8 @@ import { OperationsWorkspace } from '@/app/OperationsWorkspace'
 import { SignInScreen } from '@/auth/SignInScreen'
 import { useAuthSession } from '@/auth/useAuthSession'
 import { useAccessibleCompanies } from '@/features/company/useAccessibleCompanies'
+import { InitialCompanyBootstrapPanel } from '@/features/company/InitialCompanyBootstrapPanel'
+import { useInitialCompanyBootstrap } from '@/features/company/useInitialCompanyBootstrap'
 import { useDashboardSummary } from '@/features/dashboard/useDashboardSummary'
 import { CreateRfqPanel } from '@/features/sales/CreateRfqPanel'
 import { useCreateRfq } from '@/features/sales/useCreateRfq'
@@ -14,6 +16,7 @@ export function AppShell() {
   const { loading, session } = useAuthSession()
   const dashboardSummary = useDashboardSummary(Boolean(session))
   const companies = useAccessibleCompanies(Boolean(session))
+  const bootstrapCompany = useInitialCompanyBootstrap()
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
   const accessibleCompanies = companies.data ?? []
   const activeCompanyId = accessibleCompanies.length === 1
@@ -62,6 +65,7 @@ export function AppShell() {
         companies={accessibleCompanies}
         companyId={activeCompanyId}
         onCompanyChange={setSelectedCompanyId}
+        canBootstrap={companies.isSuccess && accessibleCompanies.length === 0}
         salesPanel={
           <CreateRfqPanel
             companyId={activeCompanyId}
@@ -69,6 +73,13 @@ export function AppShell() {
             creating={createRfq.isPending}
             error={createRfq.error instanceof Error ? createRfq.error.message : null}
             onCreate={(input) => createRfq.mutate(input)}
+          />
+        }
+        setupPanel={
+          <InitialCompanyBootstrapPanel
+            bootstrapping={bootstrapCompany.isPending}
+            error={bootstrapCompany.error instanceof Error ? bootstrapCompany.error.message : null}
+            onBootstrap={(input) => bootstrapCompany.mutate(input)}
           />
         }
       />

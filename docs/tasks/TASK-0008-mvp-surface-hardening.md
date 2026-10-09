@@ -15,7 +15,7 @@ Deliver an installed-PWA surface that safely connects approved users to ERP work
 - The operational surface is responsive, English-only and does not fabricate factory records.
 
 ## In scope
-Supabase session gate, passwordless sign-in surface, responsive operations navigation, explicit company selection, live summary reads and tests.
+Supabase session gate, passwordless sign-in surface, first-company bootstrap, responsive operations navigation, explicit company selection, live summary reads and tests.
 
 ## Out of scope
 Hosted project configuration, user invitations, real factory data, device installation validation and live data-query screens.
@@ -34,10 +34,10 @@ The initial role-specific records are intentionally narrow until later workflow-
 the Command Center reads RLS-scoped live summary counts after sign-in.
 
 ## Validation evidence (exact command + result)
-`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (13 files, 32 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
+`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (18 files, 41 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
 
 ## Docs updated
-`adr/0007-passwordless-approved-user-sign-in.md`, `docs/product.md`, `docs/style.md`, `docs/architecture.md` and `docs/tasks/TASKS.md`.
+`adr/0007-passwordless-approved-user-sign-in.md`, `adr/0012-initial-tenant-bootstrap.md`, `docs/product.md`, `docs/style.md`, `docs/architecture.md` and `docs/tasks/TASKS.md`.
 
 ## Follow-ups / risks
 Hosted Supabase provisioning is blocked by the connector's unavailable cost-confirmation endpoint; browser/device acceptance must follow deployment.

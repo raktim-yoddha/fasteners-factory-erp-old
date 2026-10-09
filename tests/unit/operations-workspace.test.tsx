@@ -15,6 +15,8 @@ describe('OperationsWorkspace', () => {
         companyId="00000000-0000-4000-8000-000000000001"
         onCompanyChange={vi.fn()}
         salesPanel={null}
+        setupPanel={null}
+        canBootstrap={false}
       />
     )
 

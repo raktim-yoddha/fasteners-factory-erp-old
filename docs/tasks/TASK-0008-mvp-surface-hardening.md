@@ -39,6 +39,10 @@ they read current revisions immediately before approval, reservation, preparatio
 `pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (22 files, 45 tests passed); `pnpm e2e` (suite loads and
 correctly skips without required hosted E2E secrets); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-10.
 
+Hosted database validation on 2026-10-10: ran `tests/integration/hosted-manufacturing-path.sql` through the
+connected Supabase project. The command path completed and rolled back; a follow-up count confirmed zero Auth,
+company, shipment and ledger rows remained.
+
 ## Docs updated
 `adr/0007-passwordless-approved-user-sign-in.md`, `adr/0012-initial-tenant-bootstrap.md`, `adr/0013-hosted-end-to-end-verification.md`, `docs/product.md`, `docs/style.md`, `docs/architecture.md`, `docs/testing.md` and `docs/tasks/TASKS.md`.
 

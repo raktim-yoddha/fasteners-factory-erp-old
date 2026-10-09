@@ -1,0 +1,67 @@
+-- Run only through a privileged hosted test connection against an empty disposable project or branch.
+-- Every change is rolled back. The inner commands run as an authenticated SAMPLE operator.
+begin;
+
+insert into auth.users (
+  id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+) values (
+  '11111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'sample.operator@invalid.test',
+  now(), '{"provider":"email","providers":["email"]}', '{"display_name":"SAMPLE Operator"}', now(), now()
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+do $$
+declare
+  v_company_id uuid;
+  v_plant_id uuid;
+  v_customer_id uuid;
+  v_item_id uuid;
+  v_warehouse_id uuid;
+  v_location_id uuid;
+  v_rfq_id uuid;
+  v_quotation_id uuid;
+  v_sales_order_id uuid;
+  v_sales_order_line_id uuid;
+  v_lot_id uuid;
+  v_reservation_id uuid;
+  v_shipment_id uuid;
+  v_on_hand numeric;
+begin
+  select public.bootstrap_initial_company('SAMPLE Factory', 'SAMPLE Plant') into v_company_id;
+  select id into v_plant_id from public.plants where company_id = v_company_id;
+  insert into public.customers (company_id, code, name) values (v_company_id, 'SAMPLE-CUST', 'SAMPLE Customer') returning id into v_customer_id;
+  insert into public.items (company_id, sku, description, base_uom) values (v_company_id, 'SAMPLE-M8', 'SAMPLE M8 fastener', 'pcs') returning id into v_item_id;
+  insert into public.warehouses (company_id, plant_id, code, name) values (v_company_id, v_plant_id, 'SAMPLE-WH', 'SAMPLE Warehouse') returning id into v_warehouse_id;
+  insert into public.stock_locations (company_id, warehouse_id, code, name) values (v_company_id, v_warehouse_id, 'SAMPLE-LOC', 'SAMPLE Location') returning id into v_location_id;
+
+  select public.create_rfq(v_company_id, 'SAMPLE-RFQ-001', v_customer_id, 'SAMPLE M8 fastener enquiry',
+    '[{"item_id":null,"requested_description":"SAMPLE M8 fastener","quantity":10,"uom":"pcs","required_by":null}]'::jsonb, 'sample-rfq-001') into v_rfq_id;
+  perform public.record_feasibility(v_company_id, v_rfq_id, 'feasible', null, null, null, 'SAMPLE', 1, 'sample-feasibility-001');
+  select public.create_quotation(v_company_id, v_rfq_id, 'SAMPLE-Q-001', 'INR', current_date + 30,
+    jsonb_build_array(jsonb_build_object('item_id', v_item_id, 'quantity', 10, 'uom', 'pcs', 'unit_price', 25, 'bom_revision_id', null, 'routing_revision_id', null)),
+    'sample-quotation-001') into v_quotation_id;
+  perform public.approve_quotation(v_company_id, v_quotation_id, 1, 'sample-approval-001');
+  select public.accept_quotation_create_sales_order(v_company_id, v_quotation_id, 'SAMPLE-SO-001', 'SAMPLE-PO-001', current_date + 14, 2, 'sample-sales-order-001') into v_sales_order_id;
+  select id into v_sales_order_line_id from public.sales_order_lines where sales_order_id = v_sales_order_id;
+
+  select public.receive_finished_goods(v_company_id, v_item_id, v_location_id, 'SAMPLE-LOT-001', 10, 'pcs', 'sample-receipt-001') into v_lot_id;
+  perform public.release_stock_lot(v_company_id, v_lot_id, 1, 'sample-release-001');
+  select public.reserve_finished_goods(v_company_id, v_sales_order_line_id, v_lot_id, 10, 1, 'sample-reservation-001') into v_reservation_id;
+  select public.prepare_packing_shipment(v_company_id, v_sales_order_id, 'SAMPLE-PACK-001', 'SAMPLE-SHIP-001',
+    jsonb_build_array(jsonb_build_object('reservation_id', v_reservation_id, 'quantity', 10)), 2, 'sample-packing-001') into v_shipment_id;
+  perform public.dispatch_shipment(v_company_id, v_shipment_id, 1, 'sample-dispatch-001');
+
+  if not exists (select 1 from public.shipments where id = v_shipment_id and status = 'dispatched') then
+    raise exception 'SAMPLE_DISPATCH_NOT_COMPLETED';
+  end if;
+  select coalesce(sum(quantity_delta), 0) into v_on_hand from public.stock_ledger_entries where lot_id = v_lot_id;
+  if v_on_hand <> 0 then
+    raise exception 'SAMPLE_LEDGER_BALANCE_UNEXPECTED';
+  end if;
+end;
+$$;
+
+rollback;

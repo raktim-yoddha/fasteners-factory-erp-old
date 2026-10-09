@@ -25,6 +25,12 @@ master data, RFQ, feasibility, quotation, approval, sales order, receipt, QC rel
 The suite intentionally skips when those variables are absent. It must not target a shared or production project:
 bootstrap is correctly one-time, so each run needs a new migrated project or disposable database branch.
 
+## Hosted database integration check
+
+`tests/integration/hosted-manufacturing-path.sql` is a transaction-based companion for an empty hosted test project
+or branch. It runs every protected factory command as a simulated authenticated SAMPLE operator, asserts dispatch
+and the resulting zero lot balance, then rolls back. It never leaves users, companies, lots or ledger entries behind.
+
 ## Manual L1 evidence
 
 Before TASK-0001 is `DONE`, record the deployed Cloudflare Pages URL and test results for Windows 11 Chrome

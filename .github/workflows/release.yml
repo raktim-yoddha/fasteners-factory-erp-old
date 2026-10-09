@@ -1,0 +1,72 @@
+# Publishes a release when `release X.Y.Z` pushes the tag vX.Y.Z:
+#   1. a draft GitHub release, written from CHANGELOG.md and git (scripts/release-notes.mjs)
+#   2. build jobs upload their files to the draft (one per platform; delete the ones you don't ship)
+#   3. the draft is published (Latest, or prerelease for -beta/-rc) only when every build passed
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch: # re-run a release by hand for an existing tag
+    inputs:
+      tag:
+        description: Tag to release (vX.Y.Z)
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Write the release text
+        run: |
+          node scripts/release-notes.mjs "$TAG" > notes.txt
+          head -n 1 notes.txt | sed 's/^title: //' > title.txt
+          tail -n +2 notes.txt > body.md
+      - run: gh release create "$TAG" --draft --verify-tag --title "$(cat title.txt)" --notes-file body.md
+
+  build:
+    needs: draft
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The product is a static PWA: attach the built site as one zip. Until TASK-0001 adds a real
+      # app, `pnpm build` is a placeholder that makes no dist/, so there is nothing to attach.
+      - run: pnpm build
+        shell: bash
+      - run: |
+          if [ -d dist ]; then (cd dist && zip -r ../fastener-erp-web.zip .) && gh release upload "$TAG" fastener-erp-web.zip --clobber; else echo "no dist/ yet (docs-only release)"; fi
+        shell: bash
+
+  publish:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [[ "$TAG" == *-* ]]; then KIND=--prerelease; else KIND=--latest; fi
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false $KIND

@@ -19,6 +19,7 @@ Status of individual tasks lives in `docs/tasks/TASKS.md`.
 MVP definition: L1-L3 complete, the brief's Part M scenarios that apply (1, 3, 10, 11, 13, and 15 in
 part) passing, installed and demoed on one Windows PC and one Android device.
 
-## First tasks (all TODO in `docs/tasks/TASKS.md`)
-TASK-0001 foundation, 0002 auth + roles + RLS, 0003 master data, 0004 BOM/routing + command center
-skeleton, 0005 enquiry-to-order, 0006 stock ledger + reservation, 0007 packing + dispatch, 0008 MVP demo + hardening.
+## First tasks
+
+TASK-0001 is in review. TASK-0002 through TASK-0008 are implemented in local vertical slices and remain
+in progress until their hosted Supabase integration, device installation and acceptance checks are complete.

@@ -38,6 +38,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     setupFiles: ['./tests/setup.ts'],
+    include: ['tests/unit/**/*.test.{ts,tsx,mjs}', 'scripts/**/*.test.mjs'],
+    exclude: ['tests/e2e/**'],
     css: true
   }
 })

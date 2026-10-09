@@ -15,7 +15,7 @@ Deliver an installed-PWA surface that safely connects approved users to ERP work
 - The operational surface is responsive, English-only and does not fabricate factory records.
 
 ## In scope
-Supabase session gate, passwordless sign-in surface, first-company bootstrap, responsive operations navigation, explicit company selection, master-data and stock setup, live summary reads and tests.
+Supabase session gate, passwordless sign-in surface, first-company bootstrap, responsive operations navigation, explicit company selection, master-data and stock setup, live summary reads, commercial, reservation, packing and dispatch controls, unit and hosted-E2E coverage.
 
 ## Out of scope
 Hosted project configuration, user invitations, real factory data, device installation validation and live data-query screens.
@@ -27,17 +27,21 @@ Hosted project configuration, user invitations, real factory data, device instal
 The browser requests a session only; public account creation remains disabled. Permissions continue to be database-owned.
 
 ## Test cases (happy, failure, concurrency, AI-off as relevant)
-The app test asserts that an unconfigured backend cannot expose operations. Hosted sign-in requires the project and redirect URL.
+The app test asserts that an unconfigured backend cannot expose operations. The hosted Playwright manufacturing path
+exercises passwordless sign-in, bootstrap, master data, commercial, stock and dispatch commands using SAMPLE data;
+it requires a freshly migrated disposable project and approved test user.
 
 ## Implementation notes
-The initial role-specific records are intentionally narrow until later workflow-detail queries are connected;
-the Command Center reads RLS-scoped live summary counts after sign-in.
+The Command Center reads RLS-scoped live summary counts after sign-in. Browser forms only invoke guarded commands;
+they read current revisions immediately before approval, reservation, preparation and dispatch.
 
 ## Validation evidence (exact command + result)
-`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (19 files, 42 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
+`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (22 files, 45 tests passed); `pnpm e2e` (suite loads and
+correctly skips without required hosted E2E secrets); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-10.
 
 ## Docs updated
-`adr/0007-passwordless-approved-user-sign-in.md`, `adr/0012-initial-tenant-bootstrap.md`, `docs/product.md`, `docs/style.md`, `docs/architecture.md` and `docs/tasks/TASKS.md`.
+`adr/0007-passwordless-approved-user-sign-in.md`, `adr/0012-initial-tenant-bootstrap.md`, `adr/0013-hosted-end-to-end-verification.md`, `docs/product.md`, `docs/style.md`, `docs/architecture.md`, `docs/testing.md` and `docs/tasks/TASKS.md`.
 
 ## Follow-ups / risks
-Hosted Supabase provisioning is blocked by the connector's unavailable cost-confirmation endpoint; browser/device acceptance must follow deployment.
+Hosted Supabase provisioning is blocked by the connector's unavailable cost-confirmation endpoint; browser/device
+acceptance and unskipped E2E must follow deployment.

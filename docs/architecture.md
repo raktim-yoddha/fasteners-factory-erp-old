@@ -63,9 +63,13 @@ The Stock workspace calls those commands through typed adapters and reads lot st
 ledger row or QC status directly.
 Prepared packing shipments are created atomically from active reservations; dispatch then consumes those exact
 reservation lines through the signed ledger (ADR 0011).
+The browser workspace exposes the commercial command chain, matching-item stock reservation and packed-shipment
+dispatch without adding any direct business-table writes. The hosted Playwright suite uses the same browser flow
+against a disposable project, including its passwordless sign-in session (ADR 0013).
 
 ## Environments
-Local Supabase (CLI + Docker) for development and migration tests; one hosted project for the pilot.
+Cloud Supabase is the only required backend environment; no local Docker Supabase setup is required for this MVP.
+A separate disposable hosted project or database branch is used for end-to-end verification, never production.
 Secrets only in Supabase/GitHub secrets, never in the repo. Region and plan: open questions Q1-Q2.
 
 ## Trust boundaries

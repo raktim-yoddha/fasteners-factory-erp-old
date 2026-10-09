@@ -14,6 +14,17 @@ Explains verification strategy; rules live in `AGENTS.md`.
 CI runs all four commands on Ubuntu. Unit tests use JSDOM only where a browser DOM is required; repository
 scripts remain Node-environment tests.
 
+## Hosted end-to-end suite
+
+`pnpm e2e` uses Chromium against a **fresh disposable** hosted Supabase project and its deployed app URL. It requires
+`E2E_BASE_URL`, `E2E_SUPABASE_URL`, `E2E_SUPABASE_SERVICE_ROLE_KEY` and `E2E_TEST_EMAIL` as secret runner variables.
+The service-role key stays in the Node test runner and is used only to generate the approved test user's magic link;
+the browser carries only the authenticated session. The suite then drives SAMPLE data through first-company bootstrap,
+master data, RFQ, feasibility, quotation, approval, sales order, receipt, QC release, reservation, packing and dispatch.
+
+The suite intentionally skips when those variables are absent. It must not target a shared or production project:
+bootstrap is correctly one-time, so each run needs a new migrated project or disposable database branch.
+
 ## Manual L1 evidence
 
 Before TASK-0001 is `DONE`, record the deployed Cloudflare Pages URL and test results for Windows 11 Chrome

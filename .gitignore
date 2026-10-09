@@ -6,3 +6,5 @@ dist/
 supabase/.temp/
 graphify-out/
 *.zip
+playwright-report/
+test-results/

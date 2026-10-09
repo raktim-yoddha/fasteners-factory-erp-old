@@ -51,3 +51,9 @@ on-hand is the sum of those movements, not a mutable balance. `stock_reservation
 committed to sales-order lines, and `stock_positions` derives on-hand, reserved and available-to-promise.
 The `reserve_finished_goods` command locks the sales order and lot, checks the expected order revision,
 requires a released QC lot, enforces available stock, records an audit row and accepts a caller idempotency key.
+
+## Packing and dispatch
+
+`packing_orders` and `shipments` retain independent state. `dispatch_shipment` locks the shipment, packing order,
+sales order, lots and reservations; it consumes only active reserved quantity, writes signed shipment ledger entries,
+updates the order fulfillment state and creates an audit row as one transaction.

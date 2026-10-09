@@ -44,6 +44,9 @@ mutation, so later commercial and production records can pin a revision without 
 and sales-order lines can pin the relevant drawing, BOM and routing revision IDs rather than resolving a newer
 engineering revision later.
 
+`create_rfq` is the initial RFQ write boundary: it validates the tenant customer and optional item scope, inserts
+the RFQ and its lines, writes the audit event and deduplicates retries with a command idempotency key.
+
 ## Inventory ledger
 
 `stock_lots` identify stock by item and location. `stock_ledger_entries` are append-only signed movements;

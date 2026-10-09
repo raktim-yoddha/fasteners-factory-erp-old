@@ -18,7 +18,7 @@ test.describe('SAMPLE manufacturing path', () => {
     await page.getByLabel('Company name').fill('SAMPLE Factory')
     await page.getByLabel('First plant name').fill('SAMPLE Plant')
     await page.getByRole('button', { name: 'Create company and plant' }).click()
-    await expect(page.getByRole('heading', { name: 'Master data' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Set up the first company' })).toBeHidden()
 
     await page.getByRole('button', { name: 'Master data' }).click()
     const customerForm = page.locator('form').filter({ hasText: 'Customer' }).first()

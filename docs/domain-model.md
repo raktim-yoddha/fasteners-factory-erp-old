@@ -43,3 +43,11 @@ mutation, so later commercial and production records can pin a revision without 
 `NUMERIC` quantities, explicit UOM, and monetary prices with currency held on the quotation. Feasibility, quote
 and sales-order lines can pin the relevant drawing, BOM and routing revision IDs rather than resolving a newer
 engineering revision later.
+
+## Inventory ledger
+
+`stock_lots` identify stock by item and location. `stock_ledger_entries` are append-only signed movements;
+on-hand is the sum of those movements, not a mutable balance. `stock_reservations` represent the quantity
+committed to sales-order lines, and `stock_positions` derives on-hand, reserved and available-to-promise.
+The `reserve_finished_goods` command locks the sales order and lot, checks the expected order revision,
+requires a released QC lot, enforces available stock, records an audit row and accepts a caller idempotency key.

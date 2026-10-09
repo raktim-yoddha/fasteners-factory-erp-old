@@ -22,6 +22,8 @@ erDiagram
 - `audit_log` is append-only: no authenticated insert/update/delete policy exists. Trusted future commands write it.
 - Every future operational table carries `company_id`, enables RLS, indexes its RLS filters, and uses database
   commands for multi-record changes.
+- `bootstrap_initial_company` creates the first company, plant, membership and administrator role only when no
+  company exists. Every later tenancy change remains role-protected.
 
 ## Master data
 

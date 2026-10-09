@@ -70,3 +70,5 @@ Functions. AI provider is a further boundary, absent until L8.
 
 The browser can request a passwordless sign-in link only for an existing approved account; the call disables
 automatic user creation. No role, membership or company bootstrap is trusted to browser code (ADR 0007).
+The sole setup exception is the locked, one-time initial-company bootstrap command, which creates the first
+company, plant and caller administrator membership atomically (ADR 0012).

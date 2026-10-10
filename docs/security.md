@@ -27,6 +27,22 @@ read used by the browser Command Center.
 and queries each source table as the caller. Existing RLS policies therefore filter every returned identifier without
 adding an all-records search permission.
 
+## Hosted advisor evidence (2026-10-10)
+
+Supabase security advisors reported twelve `authenticated_security_definer_function_executable` warnings. These are
+the intended browser-callable protected RPCs: initial-company bootstrap, commercial transitions, stock receipt/
+release/reservation, packing/dispatch, and the Command Center. Source review confirms that each requires
+`auth.uid()` and a protected company permission before accessing business truth; anonymous and `PUBLIC` execution
+are revoked. The warning is therefore monitored evidence, not an instruction to remove the authenticated RPC grant.
+
+The same advisor reported that Supabase Auth leaked-password protection is disabled. The production app uses
+passwordless email links, but the project owner should still enable that dashboard control before granting any
+password-based sign-in or recovery path. This is a dashboard setting and is not stored in source code.
+
+Performance advisory findings for unindexed foreign keys and unused indexes are informational on the current SAMPLE
+dataset. Do not bulk-add indexes purely to silence the advisor: retain tenant/RLS indexes and add a measured index
+only when a real production query plan shows the need.
+
 ## Current limits
 
 There is no user-invitation UI, real factory data, storage bucket, service-role browser operation or deployed Pages

@@ -33,10 +33,10 @@ Static assertions cover tenant RLS, numeric amounts, pinning references and guar
 The sales-order status is independent from RFQ/quote status; it is not a global workflow field.
 
 ## Validation evidence (exact command + result)
-`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (14 files, 34 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
+`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (31 files, 58 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-10. Hosted rollback integration passed on 2026-10-10: approved SAMPLE BOM/routing revisions were selected for feasibility and quotation, then verified on the resulting sales-order line; the transaction left no data behind.
 
 ## Docs updated
 `adr/0008-rfq-command-boundary.md`, `adr/0009-commercial-state-command-chain.md`, `docs/architecture.md`, `docs/domain-model.md` and `docs/tasks/TASK-0008-mvp-surface-hardening.md`.
 
 ## Follow-ups / risks
-Hosted Supabase project creation is unavailable through the connector's missing cost-confirmation endpoint.
+Commercial detail screens and multi-line quotations remain later work; the hosted Supabase project is connected.

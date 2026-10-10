@@ -23,3 +23,9 @@ returned current revision for an approval/acceptance command. The commands use a
 The authenticated operations workspace presents the four commands in sequence and reads each record's current
 revision immediately before submitting it. The first MVP quotation form does not attach engineering revisions;
 when an approved BOM or routing is required, the server remains the enforcing boundary.
+
+## Amendment (2026-10-10): Engineering revision selection and item binding
+
+Feasibility and quotation controls can select approved engineering revisions. A database trigger rejects a BOM or
+routing revision unless its parent definition produces the quotation line's item, so the browser cannot pin an
+unrelated approved revision.

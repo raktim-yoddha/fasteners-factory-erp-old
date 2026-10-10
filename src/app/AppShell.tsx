@@ -22,6 +22,7 @@ import { useCreateRfq } from '@/features/sales/useCreateRfq'
 import { useCustomers } from '@/features/sales/useCustomers'
 import { CommercialWorkflowPanel } from '@/features/sales/CommercialWorkflowPanel'
 import { useCommercialCommands, useCommercialRecords } from '@/features/sales/useCommercialWorkflow'
+import { useEngineeringRevisionOptions } from '@/features/sales/useEngineeringRevisionOptions'
 import { DispatchPanel } from '@/features/dispatch/DispatchPanel'
 import { useDispatchCommands, useDispatchRecords } from '@/features/dispatch/useDispatchWorkflow'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
@@ -43,6 +44,7 @@ export function AppShell() {
   const customers = useCustomers(activeCompanyId)
   const createRfq = useCreateRfq()
   const commercialRecords = useCommercialRecords(activeCompanyId)
+  const engineeringRevisions = useEngineeringRevisionOptions(activeCompanyId)
   const commercialCommands = useCommercialCommands()
   const dispatchRecords = useDispatchRecords(activeCompanyId)
   const dispatchCommands = useDispatchCommands()
@@ -104,6 +106,7 @@ export function AppShell() {
           <CommercialWorkflowPanel
             companyId={activeCompanyId}
             items={(masterDataOptions.data ?? { plants: [], warehouses: [], items: [], locations: [] }).items}
+            engineering={engineeringRevisions.data ?? { drawings: [], boms: [], routings: [] }}
             records={commercialRecords.data ?? { rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }}
             busy={commercialCommands.feasibility.isPending || commercialCommands.quotation.isPending || commercialCommands.approve.isPending || commercialCommands.accept.isPending}
             onFeasibility={(input) => commercialCommands.feasibility.mutateAsync(input)}

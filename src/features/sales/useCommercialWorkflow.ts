@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 
 const id = z.uuid()
+const optionalId = z.uuid().nullable()
 const uom = z.enum(['pcs', 'kg', 'm', 'set'])
 const rfqSchema = z.object({ id, rfq_number: z.string(), status: z.string(), revision: z.number().int() })
 const quotationSchema = z.object({ id, quotation_number: z.string(), rfq_id: id, status: z.string(), revision: z.number().int() })
@@ -16,8 +17,8 @@ export type CommercialRecords = {
   salesOrderLines: z.infer<typeof salesOrderLineSchema>[]
 }
 
-const feasibilitySchema = z.object({ companyId: id, rfqId: id, status: z.enum(['feasible', 'conditional', 'not_feasible', 'info_required']), conditions: z.string().max(2000), expectedRfqRevision: z.number().int().positive(), idempotencyKey: id })
-const quotationInputSchema = z.object({ companyId: id, rfqId: id, quotationNumber: z.string().trim().min(3).max(64), currencyCode: z.string().trim().regex(/^[A-Z]{3}$/), validUntil: z.string().date(), itemId: id, quantity: z.coerce.number().positive(), uom, unitPrice: z.coerce.number().nonnegative(), idempotencyKey: id })
+const feasibilitySchema = z.object({ companyId: id, rfqId: id, status: z.enum(['feasible', 'conditional', 'not_feasible', 'info_required']), drawingRevisionId: optionalId, bomRevisionId: optionalId, routingRevisionId: optionalId, conditions: z.string().max(2000), expectedRfqRevision: z.number().int().positive(), idempotencyKey: id })
+const quotationInputSchema = z.object({ companyId: id, rfqId: id, quotationNumber: z.string().trim().min(3).max(64), currencyCode: z.string().trim().regex(/^[A-Z]{3}$/), validUntil: z.string().date(), itemId: id, bomRevisionId: optionalId, routingRevisionId: optionalId, quantity: z.coerce.number().positive(), uom, unitPrice: z.coerce.number().nonnegative(), idempotencyKey: id })
 const approvalSchema = z.object({ companyId: id, quotationId: id, expectedRevision: z.number().int().positive(), idempotencyKey: id })
 const acceptanceSchema = z.object({ companyId: id, quotationId: id, salesOrderNumber: z.string().trim().min(3).max(64), customerPoNumber: z.string().trim().min(1).max(160), promisedDate: z.string().date(), expectedQuotationRevision: z.number().int().positive(), idempotencyKey: id })
 
@@ -55,13 +56,13 @@ export function useCommercialCommands() {
   const feasibility = useMutation({ mutationFn: async (input: FeasibilityInput) => {
     if (!supabase) throw new Error('Supabase is not configured.')
     const request = feasibilitySchema.parse(input)
-    const { error } = await supabase.rpc('record_feasibility', { p_company_id: request.companyId, p_rfq_id: request.rfqId, p_status: request.status, p_drawing_revision_id: null, p_bom_revision_id: null, p_routing_revision_id: null, p_conditions: request.conditions, p_expected_rfq_revision: request.expectedRfqRevision, p_idempotency_key: request.idempotencyKey })
+    const { error } = await supabase.rpc('record_feasibility', { p_company_id: request.companyId, p_rfq_id: request.rfqId, p_status: request.status, p_drawing_revision_id: request.drawingRevisionId, p_bom_revision_id: request.bomRevisionId, p_routing_revision_id: request.routingRevisionId, p_conditions: request.conditions, p_expected_rfq_revision: request.expectedRfqRevision, p_idempotency_key: request.idempotencyKey })
     if (error) throw error
   }, onSuccess: invalidate })
   const quotation = useMutation({ mutationFn: async (input: QuotationInput) => {
     if (!supabase) throw new Error('Supabase is not configured.')
     const request = quotationInputSchema.parse(input)
-    const { error } = await supabase.rpc('create_quotation', { p_company_id: request.companyId, p_rfq_id: request.rfqId, p_quotation_number: request.quotationNumber, p_currency_code: request.currencyCode, p_valid_until: request.validUntil, p_lines: [{ item_id: request.itemId, quantity: request.quantity, uom: request.uom, unit_price: request.unitPrice, bom_revision_id: null, routing_revision_id: null }], p_idempotency_key: request.idempotencyKey })
+    const { error } = await supabase.rpc('create_quotation', { p_company_id: request.companyId, p_rfq_id: request.rfqId, p_quotation_number: request.quotationNumber, p_currency_code: request.currencyCode, p_valid_until: request.validUntil, p_lines: [{ item_id: request.itemId, quantity: request.quantity, uom: request.uom, unit_price: request.unitPrice, bom_revision_id: request.bomRevisionId, routing_revision_id: request.routingRevisionId }], p_idempotency_key: request.idempotencyKey })
     if (error) throw error
   }, onSuccess: invalidate })
   const approve = useMutation({ mutationFn: async (input: QuotationApprovalInput) => {

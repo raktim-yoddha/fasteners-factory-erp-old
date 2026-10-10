@@ -104,9 +104,9 @@ begin
 
   select public.create_rfq(v_company_id, 'SAMPLE-RFQ-001', v_customer_id, 'SAMPLE M8 fastener enquiry',
     '[{"item_id":null,"requested_description":"SAMPLE M8 fastener","quantity":10,"uom":"pcs","required_by":null}]'::jsonb, 'sample-rfq-001') into v_rfq_id;
-  perform public.record_feasibility(v_company_id, v_rfq_id, 'feasible', null, null, null, 'SAMPLE', 1, 'sample-feasibility-001');
+  perform public.record_feasibility(v_company_id, v_rfq_id, 'feasible', null, v_bom_revision_id, v_routing_revision_id, 'SAMPLE', 1, 'sample-feasibility-001');
   select public.create_quotation(v_company_id, v_rfq_id, 'SAMPLE-Q-001', 'INR', current_date + 30,
-    jsonb_build_array(jsonb_build_object('item_id', v_item_id, 'quantity', 10, 'uom', 'pcs', 'unit_price', 25, 'bom_revision_id', null, 'routing_revision_id', null)),
+    jsonb_build_array(jsonb_build_object('item_id', v_item_id, 'quantity', 10, 'uom', 'pcs', 'unit_price', 25, 'bom_revision_id', v_bom_revision_id, 'routing_revision_id', v_routing_revision_id)),
     'sample-quotation-001') into v_quotation_id;
   perform set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
   begin
@@ -119,6 +119,9 @@ begin
   perform public.approve_quotation(v_company_id, v_quotation_id, 1, 'sample-approval-001');
   select public.accept_quotation_create_sales_order(v_company_id, v_quotation_id, 'SAMPLE-SO-001', 'SAMPLE-PO-001', current_date + 14, 2, 'sample-sales-order-001') into v_sales_order_id;
   select id into v_sales_order_line_id from public.sales_order_lines where sales_order_id = v_sales_order_id;
+  if not exists (select 1 from public.sales_order_lines where id = v_sales_order_line_id and bom_revision_id = v_bom_revision_id and routing_revision_id = v_routing_revision_id) then
+    raise exception 'SAMPLE_ENGINEERING_REVISIONS_NOT_PINNED';
+  end if;
   select stock_status into v_stock_status from public.get_order_command_center(v_company_id) where sales_order_id = v_sales_order_id;
   if v_stock_status <> 'awaiting reservation' then raise exception 'SAMPLE_COMMAND_CENTER_INITIAL_STATUS_UNEXPECTED'; end if;
 

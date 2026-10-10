@@ -33,15 +33,69 @@ The planned 16-stage factory backbone is a **DESIGN PROPOSAL**, not a claim abou
 
 ## Architecture
 
-```text
-Installed PWA (Windows Chrome / Android Chrome)
-                  |
-                  | HTTPS + Supabase session
-                  v
-Cloudflare Pages static host ───────> Supabase Auth
-                                      Supabase PostgreSQL + RLS + RPC commands
-                                      Private Storage / Realtime where justified
+```mermaid
+flowchart TB
+  subgraph D[Operator device: Windows 11 Chrome or Android Chrome]
+    I[Install or launch PWA]
+    C[Cached app shell and read-only screens]
+    U[React operations workspace]
+    N{Online?}
+    I --> U
+    I --> C
+    U --> N
+  end
+
+  subgraph H[Static delivery]
+    P[Cloudflare Pages]
+  end
+
+  subgraph S[Hosted Supabase: authoritative backend]
+    A[Auth: approved user session]
+    R[Postgres reads protected by RLS]
+    X[Transactional RPC command]
+    V[Validate identity, role, company, revision, quantity and idempotency]
+    T[(PostgreSQL business tables)]
+    L[(Append-only stock ledger and audit log)]
+    ST[Private Storage]
+    RT[Realtime: only when justified]
+    X --> V --> T
+    V --> L
+    T -. approved private files .-> ST
+    T -. selected live updates .-> RT
+  end
+
+  I -->|1. Load assets and service worker| P
+  P --> C
+  U -->|2. Request sign-in link| A
+  A -->|Authenticated session| U
+  U -->|3. Read company-scoped data| R
+  R -->|Permitted records only| U
+  U -->|4. Request one protected action| X
+  X -->|5. Confirm success or structured rejection| U
+  N -->|Online| A
+  N -->|Online| R
+  N -->|Online only for critical writes| X
+  N -->|Offline: cached reads and labelled local drafts only| C
 ```
+
+### How the system behaves
+
+1. **Open and authenticate.** The installed app loads its static shell from Cloudflare Pages. An existing approved user requests a passwordless Supabase sign-in link. Until the session is confirmed, operations data stays unavailable.
+2. **Choose a company and work with current records.** The browser uses the session to request company-scoped dashboard counts, search results, master data, lots, and workflow records. RLS filters every read at the database; the browser never decides what a user may see.
+3. **Perform an operation.** Between reads, an operator can create master data, create an RFQ, record feasibility, make or approve a quote, accept a sales order, receive/release/reserve a lot, prepare a shipment, or dispatch it. Each form requests exactly one backend command.
+4. **Server checks before truth changes.** A command validates the caller’s identity and permission, company, object state, expected revision, quantities, and idempotency key in one transaction. It either writes the corresponding business records plus audit/ledger events, or returns a structured reason such as `INSUFFICIENT_AVAILABLE_STOCK`, `LOT_QC_HOLD`, `INVALID_TRANSITION`, or `REVISION_CONFLICT`.
+5. **Refresh after confirmation.** Only a confirmed command invalidates the affected TanStack Query caches; the UI then reads the latest server truth. This avoids optimistic “success” for a failed stock, QC, approval, or dispatch operation.
+6. **If connectivity drops.** The PWA can still show its cached shell and cached read-only screens. Critical writes do not queue invisibly or claim success; they remain clearly labelled local drafts until the user is back online and submits them again.
+
+### What you can do at each stage
+
+| When | Available work | Guardrail |
+| --- | --- | --- |
+| After sign-in | Select a permitted company, view dashboard counts, search identifiers | RLS and protected permissions limit the company and records shown. |
+| After master-data setup | Maintain SAMPLE customers, suppliers, items, drawings, warehouses, locations, and work centres | Direct business-transition writes are not available from the browser. |
+| During commercial flow | RFQ → feasibility → quotation → approval → sales order | Each object keeps its own state and revision; a later action cannot skip a protected transition. |
+| During stock and dispatch | Receive → QC-hold → release → reserve → pack → dispatch | Stock is an append-only ledger; negative availability and held-lot reservation are rejected. |
+| During a failure or retry | Read the returned reason, correct the record, retry safely | Idempotency keys prevent duplicate reservation or dispatch effects. |
 
 - **Frontend:** React, Vite, TypeScript (strict), Tailwind CSS, React Router, TanStack Query.
 - **PWA:** `vite-plugin-pwa` / Workbox. The app shell and cached read screens may work offline; critical writes are online-only and never report success before Supabase confirms them.

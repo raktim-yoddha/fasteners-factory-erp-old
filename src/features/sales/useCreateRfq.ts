@@ -42,7 +42,11 @@ export function useCreateRfq() {
       return data
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['commercial-records'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['order-command-center'] })
+      ])
     }
   })
 }

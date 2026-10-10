@@ -52,7 +52,7 @@ export function CreateRfqPanel({ companyId, customers, creating, error, onCreate
           <input className="form-input" required value={requestedDescription} onChange={(event) => setRequestedDescription(event.target.value)} />
         </label>
         <label className="form-label">Quantity
-          <input className="form-input" inputMode="decimal" min="0.000001" required type="number" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
+          <input className="form-input" inputMode="decimal" min="0.000001" required step="any" type="number" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
         </label>
         <label className="form-label">Unit
           <select className="form-input" value={uom} onChange={(event) => setUom(event.target.value as CreateRfqInput['line']['uom'])}>

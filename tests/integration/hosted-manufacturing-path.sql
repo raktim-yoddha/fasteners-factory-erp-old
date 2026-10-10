@@ -2,26 +2,31 @@
 -- Every change is rolled back. The inner commands run as an authenticated SAMPLE operator.
 begin;
 
+select set_config('app.sample_operator_id', gen_random_uuid()::text, true);
+select set_config('app.sample_unauthorized_id', gen_random_uuid()::text, true);
+
 insert into auth.users (
   id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
 ) values (
-  '11111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'sample.operator@invalid.test',
+  current_setting('app.sample_operator_id')::uuid, 'authenticated', 'authenticated', concat('sample.operator+', current_setting('app.sample_operator_id'), '@invalid.test'),
   now(), '{"provider":"email","providers":["email"]}', '{"display_name":"SAMPLE Operator"}', now(), now()
 );
 
 insert into auth.users (
   id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
 ) values (
-  '22222222-2222-4222-8222-222222222222', 'authenticated', 'authenticated', 'sample.unauthorized@invalid.test',
+  current_setting('app.sample_unauthorized_id')::uuid, 'authenticated', 'authenticated', concat('sample.unauthorized+', current_setting('app.sample_unauthorized_id'), '@invalid.test'),
   now(), '{"provider":"email","providers":["email"]}', '{"display_name":"SAMPLE Unauthorized"}', now(), now()
 );
 
 set local role authenticated;
-select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select set_config('request.jwt.claim.sub', current_setting('app.sample_operator_id'), true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 do $$
 declare
+  v_operator_id uuid := current_setting('app.sample_operator_id')::uuid;
+  v_unauthorized_id uuid := current_setting('app.sample_unauthorized_id')::uuid;
   v_company_id uuid;
   v_plant_id uuid;
   v_customer_id uuid;
@@ -65,7 +70,7 @@ begin
     where record_type = 'Customer' and label = 'SAMPLE-CUST — SAMPLE Customer'
   ) then raise exception 'SAMPLE_GLOBAL_SEARCH_MISSING_RESULT'; end if;
 
-  perform set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+  perform set_config('request.jwt.claim.sub', v_unauthorized_id::text, true);
   begin
     insert into public.suppliers (company_id, code, name) values (v_company_id, 'SAMPLE-DENIED-SUP', 'SAMPLE Denied Supplier');
     raise exception 'SAMPLE_UNAUTHORIZED_MASTER_DATA_ALLOWED';
@@ -74,7 +79,7 @@ begin
   if exists (select 1 from public.search_company_records(v_company_id, 'SAMPLE-CUST')) then
     raise exception 'SAMPLE_GLOBAL_SEARCH_UNAUTHORIZED_RESULT';
   end if;
-  perform set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+  perform set_config('request.jwt.claim.sub', v_operator_id::text, true);
 
   insert into public.boms (company_id, output_item_id, name) values (v_company_id, v_item_id, 'SAMPLE M8 BOM') returning id into v_bom_id;
   insert into public.bom_revisions (company_id, bom_id, revision) values (v_company_id, v_bom_id, 'A') returning id into v_bom_revision_id;
@@ -83,8 +88,8 @@ begin
   insert into public.routing_revisions (company_id, routing_id, revision) values (v_company_id, v_routing_id, 'A') returning id into v_routing_revision_id;
   insert into public.routing_operations (company_id, routing_revision_id, sequence, work_centre_id, operation_name, setup_minutes, run_minutes_per_unit)
   select v_company_id, v_routing_revision_id, 10, id, 'SAMPLE Operation', 5, 0.5 from public.work_centres where company_id = v_company_id returning id into v_routing_operation_id;
-  update public.bom_revisions set status = 'approved', approved_at = now(), approved_by = '11111111-1111-4111-8111-111111111111' where id = v_bom_revision_id;
-  update public.routing_revisions set status = 'approved', approved_at = now(), approved_by = '11111111-1111-4111-8111-111111111111' where id = v_routing_revision_id;
+  update public.bom_revisions set status = 'approved', approved_at = now(), approved_by = v_operator_id where id = v_bom_revision_id;
+  update public.routing_revisions set status = 'approved', approved_at = now(), approved_by = v_operator_id where id = v_routing_revision_id;
   begin
     update public.bom_revisions set revision = 'B' where id = v_bom_revision_id;
     raise exception 'SAMPLE_APPROVED_BOM_REVISION_MUTABLE';
@@ -108,14 +113,14 @@ begin
   select public.create_quotation(v_company_id, v_rfq_id, 'SAMPLE-Q-001', 'INR', current_date + 30,
     jsonb_build_array(jsonb_build_object('item_id', v_item_id, 'quantity', 10, 'uom', 'pcs', 'unit_price', 25, 'bom_revision_id', v_bom_revision_id, 'routing_revision_id', v_routing_revision_id)),
     'sample-quotation-001') into v_quotation_id;
-  perform set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+  perform set_config('request.jwt.claim.sub', v_unauthorized_id::text, true);
   begin
     perform public.approve_quotation(v_company_id, v_quotation_id, 1, 'sample-denied-approval-001');
     raise exception 'SAMPLE_UNAUTHORIZED_APPROVAL_ALLOWED';
   exception when others then
     if sqlerrm <> 'FORBIDDEN' then raise; end if;
   end;
-  perform set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+  perform set_config('request.jwt.claim.sub', v_operator_id::text, true);
   perform public.approve_quotation(v_company_id, v_quotation_id, 1, 'sample-approval-001');
   select public.accept_quotation_create_sales_order(v_company_id, v_quotation_id, 'SAMPLE-SO-001', 'SAMPLE-PO-001', current_date + 14, 2, 'sample-sales-order-001') into v_sales_order_id;
   select id into v_sales_order_line_id from public.sales_order_lines where sales_order_id = v_sales_order_id;
@@ -160,7 +165,7 @@ begin
   if v_stock_status <> 'fulfilled' or v_packing_dispatch_status <> 'fulfilled' then
     raise exception 'SAMPLE_COMMAND_CENTER_DISPATCH_STATUS_UNEXPECTED';
   end if;
-  perform set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+  perform set_config('request.jwt.claim.sub', v_unauthorized_id::text, true);
   begin
     perform public.get_order_command_center(v_company_id);
     raise exception 'SAMPLE_COMMAND_CENTER_UNAUTHORIZED_READ_ALLOWED';

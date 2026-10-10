@@ -24,3 +24,10 @@ The repository provides a manually triggered `Hosted E2E` workflow. It requires 
 Supabase URL, service-role key and test email as GitHub Actions secrets, fails before Playwright when any is absent,
 and is not part of the normal push CI. The service-role key exists only in the runner environment and is never a
 Cloudflare Pages build variable.
+
+## Amendment (2026-10-10): Local disposable-session runner
+
+`pnpm e2e` also supports a local-only disposable SAMPLE user authenticated by an ignored password environment
+variable. Playwright creates its session through Supabase Auth and passes only that session to the local preview;
+the browser never receives a service-role key. This makes the existing manufacturing path executable automatically
+on an empty development project while preserving the passwordless magic-link path for hosted CI.

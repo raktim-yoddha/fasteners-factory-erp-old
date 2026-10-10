@@ -55,6 +55,8 @@ business tables and transactional commands are added only after this base is app
 The signed-in Command Center reads company-scoped summary counts and a protected `get_order_command_center` query.
 The latter is a read-only, sales-authorized boundary that reports independent commercial, reservation, packing and
 dispatch states without relying on browser-side joins or unit-unsafe quantity aggregation.
+Global identifier search uses the read-only, `SECURITY INVOKER` `search_company_records` RPC. It returns at most 20
+normalized labels and relies on the caller's existing source-table RLS rather than adding a broad search privilege.
 The master-data setup feature uses small typed browser adapters for single-table, RLS-protected customer, supplier,
 item, drawing-header, warehouse, location and work-centre creation; material or stateful transitions remain database
 commands.

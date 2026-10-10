@@ -23,6 +23,10 @@ execution, requires `auth.uid()`, then validates the caller's protected company 
 `get_order_command_center` RPC follows the same pattern and requires `sales.read`; it is the only cross-domain
 read used by the browser Command Center.
 
+`search_company_records` is intentionally different: it is `SECURITY INVOKER`, explicitly unavailable to `anon`,
+and queries each source table as the caller. Existing RLS policies therefore filter every returned identifier without
+adding an all-records search permission.
+
 ## Current limits
 
 There is no user-invitation UI, real factory data, storage bucket, service-role browser operation or deployed Pages

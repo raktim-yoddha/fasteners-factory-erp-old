@@ -9,6 +9,8 @@ import { useInitialCompanyBootstrap } from '@/features/company/useInitialCompany
 import { useDashboardSummary } from '@/features/dashboard/useDashboardSummary'
 import { OrderCommandCenterPanel } from '@/features/dashboard/OrderCommandCenterPanel'
 import { useOrderCommandCenter } from '@/features/dashboard/useOrderCommandCenter'
+import { GlobalSearchPanel } from '@/features/search/GlobalSearchPanel'
+import { useGlobalSearch } from '@/features/search/useGlobalSearch'
 import { MasterDataSetupPanel } from '@/features/master-data/MasterDataSetupPanel'
 import { useCreateMasterData } from '@/features/master-data/useCreateMasterData'
 import { useMasterDataOptions } from '@/features/master-data/useMasterDataOptions'
@@ -30,12 +32,14 @@ export function AppShell() {
   const companies = useAccessibleCompanies(Boolean(session))
   const bootstrapCompany = useInitialCompanyBootstrap()
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const accessibleCompanies = companies.data ?? []
   const activeCompanyId = accessibleCompanies.length === 1
     ? accessibleCompanies[0]!.id
     : accessibleCompanies.some((company) => company.id === selectedCompanyId) ? selectedCompanyId : null
   const dashboardSummary = useDashboardSummary(activeCompanyId)
   const orderCommandCenter = useOrderCommandCenter(activeCompanyId)
+  const globalSearch = useGlobalSearch(activeCompanyId, searchQuery)
   const customers = useCustomers(activeCompanyId)
   const createRfq = useCreateRfq()
   const commercialRecords = useCommercialRecords(activeCompanyId)
@@ -88,6 +92,7 @@ export function AppShell() {
         companyId={activeCompanyId}
         onCompanyChange={setSelectedCompanyId}
         canBootstrap={companies.isSuccess && accessibleCompanies.length === 0}
+        searchPanel={<GlobalSearchPanel companyId={activeCompanyId} error={globalSearch.isError} loading={globalSearch.isFetching} onQueryChange={setSearchQuery} query={searchQuery} results={globalSearch.data ?? []} />}
         salesPanel={<>
           <CreateRfqPanel
             companyId={activeCompanyId}

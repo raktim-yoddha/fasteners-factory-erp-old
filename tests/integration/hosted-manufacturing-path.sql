@@ -26,6 +26,13 @@ declare
   v_plant_id uuid;
   v_customer_id uuid;
   v_item_id uuid;
+  v_component_item_id uuid;
+  v_bom_id uuid;
+  v_bom_revision_id uuid;
+  v_bom_line_id uuid;
+  v_routing_id uuid;
+  v_routing_revision_id uuid;
+  v_routing_operation_id uuid;
   v_warehouse_id uuid;
   v_location_id uuid;
   v_rfq_id uuid;
@@ -48,10 +55,15 @@ begin
   insert into public.customers (company_id, code, name) values (v_company_id, 'SAMPLE-CUST', 'SAMPLE Customer') returning id into v_customer_id;
   insert into public.suppliers (company_id, code, name) values (v_company_id, 'SAMPLE-SUP', 'SAMPLE Supplier');
   insert into public.items (company_id, sku, description, base_uom) values (v_company_id, 'SAMPLE-M8', 'SAMPLE M8 fastener', 'pcs') returning id into v_item_id;
+  insert into public.items (company_id, sku, description, base_uom) values (v_company_id, 'SAMPLE-M6', 'SAMPLE M6 component', 'pcs') returning id into v_component_item_id;
   insert into public.drawings (company_id, item_id, drawing_number) values (v_company_id, v_item_id, 'SAMPLE-DRW-001');
   insert into public.work_centres (company_id, plant_id, code, name) values (v_company_id, v_plant_id, 'SAMPLE-WC', 'SAMPLE Work Centre');
   insert into public.warehouses (company_id, plant_id, code, name) values (v_company_id, v_plant_id, 'SAMPLE-WH', 'SAMPLE Warehouse') returning id into v_warehouse_id;
   insert into public.stock_locations (company_id, warehouse_id, code, name) values (v_company_id, v_warehouse_id, 'SAMPLE-LOC', 'SAMPLE Location') returning id into v_location_id;
+  if not exists (
+    select 1 from public.search_company_records(v_company_id, 'SAMPLE-CUST')
+    where record_type = 'Customer' and label = 'SAMPLE-CUST — SAMPLE Customer'
+  ) then raise exception 'SAMPLE_GLOBAL_SEARCH_MISSING_RESULT'; end if;
 
   perform set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
   begin
@@ -59,7 +71,36 @@ begin
     raise exception 'SAMPLE_UNAUTHORIZED_MASTER_DATA_ALLOWED';
   exception when insufficient_privilege then null;
   end;
+  if exists (select 1 from public.search_company_records(v_company_id, 'SAMPLE-CUST')) then
+    raise exception 'SAMPLE_GLOBAL_SEARCH_UNAUTHORIZED_RESULT';
+  end if;
   perform set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+
+  insert into public.boms (company_id, output_item_id, name) values (v_company_id, v_item_id, 'SAMPLE M8 BOM') returning id into v_bom_id;
+  insert into public.bom_revisions (company_id, bom_id, revision) values (v_company_id, v_bom_id, 'A') returning id into v_bom_revision_id;
+  insert into public.bom_lines (company_id, bom_revision_id, component_item_id, quantity, uom) values (v_company_id, v_bom_revision_id, v_component_item_id, 1, 'pcs') returning id into v_bom_line_id;
+  insert into public.routings (company_id, output_item_id, name) values (v_company_id, v_item_id, 'SAMPLE M8 Routing') returning id into v_routing_id;
+  insert into public.routing_revisions (company_id, routing_id, revision) values (v_company_id, v_routing_id, 'A') returning id into v_routing_revision_id;
+  insert into public.routing_operations (company_id, routing_revision_id, sequence, work_centre_id, operation_name, setup_minutes, run_minutes_per_unit)
+  select v_company_id, v_routing_revision_id, 10, id, 'SAMPLE Operation', 5, 0.5 from public.work_centres where company_id = v_company_id returning id into v_routing_operation_id;
+  update public.bom_revisions set status = 'approved', approved_at = now(), approved_by = '11111111-1111-4111-8111-111111111111' where id = v_bom_revision_id;
+  update public.routing_revisions set status = 'approved', approved_at = now(), approved_by = '11111111-1111-4111-8111-111111111111' where id = v_routing_revision_id;
+  begin
+    update public.bom_revisions set revision = 'B' where id = v_bom_revision_id;
+    raise exception 'SAMPLE_APPROVED_BOM_REVISION_MUTABLE';
+  exception when others then
+    if sqlerrm <> 'APPROVED_REVISION_IMMUTABLE' then raise; end if;
+  end;
+  begin
+    update public.routing_revisions set revision = 'B' where id = v_routing_revision_id;
+    raise exception 'SAMPLE_APPROVED_ROUTING_REVISION_MUTABLE';
+  exception when others then
+    if sqlerrm <> 'APPROVED_REVISION_IMMUTABLE' then raise; end if;
+  end;
+  update public.bom_lines set quantity = 2 where id = v_bom_line_id;
+  if found then raise exception 'SAMPLE_APPROVED_BOM_LINE_MUTABLE'; end if;
+  update public.routing_operations set operation_name = 'SAMPLE Changed Operation' where id = v_routing_operation_id;
+  if found then raise exception 'SAMPLE_APPROVED_ROUTING_OPERATION_MUTABLE'; end if;
 
   select public.create_rfq(v_company_id, 'SAMPLE-RFQ-001', v_customer_id, 'SAMPLE M8 fastener enquiry',
     '[{"item_id":null,"requested_description":"SAMPLE M8 fastener","quantity":10,"uom":"pcs","required_by":null}]'::jsonb, 'sample-rfq-001') into v_rfq_id;

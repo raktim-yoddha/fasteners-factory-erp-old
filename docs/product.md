@@ -17,6 +17,8 @@ its initial working title, Fastener Factory OS.
 - MVP = milestones L1-L3 of `docs/roadmap.md`: installable signed-in app, master data and the order thread,
   then one end-to-end happy path (enquiry to shipment from existing finished stock) on SAMPLE data.
   Material operations, shop floor, quality and AI follow in L4-L8.
+- Global search covers current MVP identifiers and names only; each result remains limited by the caller's existing
+  company-scoped record permissions.
 - Sign-in uses a passwordless link sent only to an already approved account (ADR 0007); there is no public
   self-registration.
 

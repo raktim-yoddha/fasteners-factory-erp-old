@@ -26,11 +26,12 @@ type OperationsWorkspaceProps = {
   stockPanel: ReactNode
   dispatchPanel: ReactNode
   commandCenterPanel: ReactNode
+  searchPanel: ReactNode
   canBootstrap: boolean
 }
 
 export function OperationsWorkspace({
-  email, onSignOut, summary, summaryError, companies, companyId, onCompanyChange, salesPanel, setupPanel, masterDataPanel, stockPanel, dispatchPanel, commandCenterPanel, canBootstrap
+  email, onSignOut, summary, summaryError, companies, companyId, onCompanyChange, salesPanel, setupPanel, masterDataPanel, stockPanel, dispatchPanel, commandCenterPanel, searchPanel, canBootstrap
 }: OperationsWorkspaceProps) {
   const [activeModule, setActiveModule] = useState(0)
   const [moduleName, moduleDescription] = modules[activeModule]!
@@ -82,6 +83,7 @@ export function OperationsWorkspace({
               {companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
             </select>
           </label>
+          {searchPanel}
           {canBootstrap ? setupPanel : null}
           <section className="mt-6 rounded-xl border border-line bg-panel p-5" aria-labelledby="records-title">
             <h3 className="font-bold" id="records-title">{summaryError ? 'Records could not be loaded' : 'Live company records'}</h3>

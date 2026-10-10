@@ -1,5 +1,5 @@
 # TASK-0004 — Versioned BOMs and routings
-- Status: IN_PROGRESS
+- Status: DONE
 - Owner/agent: Codex
 - Milestone: L2
 - Related ADRs / docs: ADR 0004; `docs/domain-model.md`
@@ -21,14 +21,16 @@ BOM/routing headers, revisions, component lines, operations, constraints, draft-
 Approval UI, workflow assignment, global search UI, order data, MRP and work orders.
 
 ## Planned files/modules
-`supabase/migrations/20261009172820_versioned_bom_routing.sql`, `docs/domain-model.md`, schema test and task board.
+`supabase/migrations/20261009172820_versioned_bom_routing.sql`, `docs/domain-model.md`, schema and hosted-integration
+tests, task board.
 
 ## Data migration and authorization implications
 All tables are tenant-scoped/RLS-protected. Revision children use a private draft check, so an approved header cannot be
 used to mutate its BOM lines or routing operations.
 
 ## Test cases (happy, failure, concurrency, AI-off as relevant)
-Schema assertions cover immutability triggers and draft-only child policies. Hosted tests will attempt child mutation after approval.
+Schema assertions cover immutability triggers and draft-only child policies. Hosted rollback tests create SAMPLE draft
+revisions and children, approve them, reject header updates and confirm approved child updates affect no rows.
 
 ## Implementation notes
 Time and quantity values use `NUMERIC`, not JavaScript floating point. Units remain explicit.
@@ -36,12 +38,16 @@ Time and quantity values use `NUMERIC`, not JavaScript floating point. Units rem
 ## Validation evidence (exact command + result)
 - `pnpm typecheck` — passed.
 - `pnpm lint` — passed.
-- `pnpm test` — passed: 7 files, 22 tests.
+- `pnpm test` — passed: 28 files, 55 tests.
 - `pnpm build` — passed: production PWA output and service worker generated.
-- Hosted migration integration — pending project provisioning.
+- `git diff --check` — passed.
+- Hosted migration/RLS integration — passed 2026-10-10 through the connected hosted project. The rollback test
+  created SAMPLE BOM/routing revisions, lines and operations, proved approved revision headers throw
+  `APPROVED_REVISION_IMMUTABLE`, and proved approved child updates affect no rows. A follow-up count confirmed
+  zero Auth, company, BOM, revision, routing and ledger rows remained.
 
 ## Docs updated
-`docs/domain-model.md`, `docs/tasks/TASKS.md` and this task file.
+`docs/domain-model.md`, `docs/testing.md`, `docs/tasks/TASKS.md` and this task file.
 
 ## Follow-ups / risks
-Hosted migration integration waits for Supabase project creation.
+The task deliberately has no drawing/BOM/routing approval UI; that workflow needs its own scoped product decision.

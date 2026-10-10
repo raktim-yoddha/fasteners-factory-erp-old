@@ -26,6 +26,8 @@ test.describe('SAMPLE manufacturing path', () => {
     await customerForm.getByLabel('Customer name').fill('SAMPLE Customer')
     await customerForm.getByRole('button', { name: 'Create customer' }).click()
     await expect(page.getByText('Customer created.')).toBeVisible()
+    await page.getByLabel('Search records').fill('SAMPLE-CUST')
+    await expect(page.getByRole('list', { name: 'Search results' })).toContainText('SAMPLE-CUST — SAMPLE Customer')
     const supplierForm = page.locator('form').filter({ hasText: 'Supplier' }).first()
     await supplierForm.getByLabel('Supplier code').fill('SAMPLE-SUP')
     await supplierForm.getByLabel('Supplier name').fill('SAMPLE Supplier')

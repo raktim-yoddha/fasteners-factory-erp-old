@@ -32,6 +32,9 @@ erDiagram
 company. A drawing revision belongs to the same company as its drawing and item. Once a revision is approved,
 the database rejects every update; a replacement revision must be created instead.
 
+The operator setup screen can create customers, suppliers, items, drawing headers, warehouses, stock locations and
+work centres through individual RLS-protected inserts. It does not create or approve drawing revisions.
+
 ## Engineering versions
 
 `boms` and `routings` select an output item; their revisions are identified by immutable IDs. `bom_lines` keep

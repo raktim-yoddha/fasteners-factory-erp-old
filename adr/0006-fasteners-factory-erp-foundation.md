@@ -26,3 +26,9 @@ The foundation can be tested on one defined desktop/mobile browser pair without 
 device or production workflow. Cloudflare Pages preview URLs supply HTTPS for install testing, while a custom
 domain and hosted Supabase project details remain open. Future device support, localization or hardware work
 must be justified by discovery and recorded before implementation.
+
+## Amendment (2026-10-10): Complete operator master-data setup
+
+The existing Master data workspace also creates suppliers, drawing headers and work centres alongside customers,
+items, warehouses and stock locations. Each action is a single RLS-protected insert validated in the browser; it
+does not expose drawing-revision approval or any multi-record business transition.

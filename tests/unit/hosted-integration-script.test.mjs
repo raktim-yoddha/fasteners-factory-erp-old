@@ -11,6 +11,10 @@ describe('hosted manufacturing integration script', () => {
     for (const assertion of ['SAMPLE_UNAUTHORIZED_APPROVAL_ALLOWED', 'SAMPLE_RESERVATION_NOT_IDEMPOTENT', 'SAMPLE_OVERSELL_ALLOWED', 'SAMPLE_DISPATCH_NOT_IDEMPOTENT', 'SAMPLE_DISPATCH_LEDGER_DUPLICATED']) {
       expect(script).toContain(assertion)
     }
+    for (const table of ['customers', 'suppliers', 'items', 'drawings', 'work_centres', 'warehouses', 'stock_locations']) {
+      expect(script).toContain(`insert into public.${table}`)
+    }
+    expect(script).toContain('SAMPLE_UNAUTHORIZED_MASTER_DATA_ALLOWED')
     expect(script.trimEnd().endsWith('rollback;')).toBe(true)
   })
 })

@@ -9,7 +9,7 @@ const modules = [
   ['Sales orders', 'RFQs, feasibility reviews, quotations and accepted orders.'],
   ['Stock', 'Lots, ledger movements, reservations and availability.'],
   ['Dispatch', 'Packing orders and shipment gate-out.'],
-  ['Master data', 'Customers, items, drawings, locations and work centres.']
+  ['Master data', 'Customers, suppliers, items, drawings, warehouses, locations and work centres.']
 ] as const
 
 type OperationsWorkspaceProps = {

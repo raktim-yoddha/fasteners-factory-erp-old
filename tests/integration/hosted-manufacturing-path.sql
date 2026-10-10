@@ -46,9 +46,20 @@ begin
   select public.bootstrap_initial_company('SAMPLE Factory', 'SAMPLE Plant') into v_company_id;
   select id into v_plant_id from public.plants where company_id = v_company_id;
   insert into public.customers (company_id, code, name) values (v_company_id, 'SAMPLE-CUST', 'SAMPLE Customer') returning id into v_customer_id;
+  insert into public.suppliers (company_id, code, name) values (v_company_id, 'SAMPLE-SUP', 'SAMPLE Supplier');
   insert into public.items (company_id, sku, description, base_uom) values (v_company_id, 'SAMPLE-M8', 'SAMPLE M8 fastener', 'pcs') returning id into v_item_id;
+  insert into public.drawings (company_id, item_id, drawing_number) values (v_company_id, v_item_id, 'SAMPLE-DRW-001');
+  insert into public.work_centres (company_id, plant_id, code, name) values (v_company_id, v_plant_id, 'SAMPLE-WC', 'SAMPLE Work Centre');
   insert into public.warehouses (company_id, plant_id, code, name) values (v_company_id, v_plant_id, 'SAMPLE-WH', 'SAMPLE Warehouse') returning id into v_warehouse_id;
   insert into public.stock_locations (company_id, warehouse_id, code, name) values (v_company_id, v_warehouse_id, 'SAMPLE-LOC', 'SAMPLE Location') returning id into v_location_id;
+
+  perform set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+  begin
+    insert into public.suppliers (company_id, code, name) values (v_company_id, 'SAMPLE-DENIED-SUP', 'SAMPLE Denied Supplier');
+    raise exception 'SAMPLE_UNAUTHORIZED_MASTER_DATA_ALLOWED';
+  exception when insufficient_privilege then null;
+  end;
+  perform set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
 
   select public.create_rfq(v_company_id, 'SAMPLE-RFQ-001', v_customer_id, 'SAMPLE M8 fastener enquiry',
     '[{"item_id":null,"requested_description":"SAMPLE M8 fastener","quantity":10,"uom":"pcs","required_by":null}]'::jsonb, 'sample-rfq-001') into v_rfq_id;

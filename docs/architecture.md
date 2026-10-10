@@ -55,8 +55,9 @@ business tables and transactional commands are added only after this base is app
 The signed-in Command Center reads company-scoped summary counts and a protected `get_order_command_center` query.
 The latter is a read-only, sales-authorized boundary that reports independent commercial, reservation, packing and
 dispatch states without relying on browser-side joins or unit-unsafe quantity aggregation.
-The master-data setup feature uses small typed browser adapters for single-table, RLS-protected customer, item,
-warehouse and location creation; material or stateful transitions remain database commands.
+The master-data setup feature uses small typed browser adapters for single-table, RLS-protected customer, supplier,
+item, drawing-header, warehouse, location and work-centre creation; material or stateful transitions remain database
+commands.
 
 Finished-goods receipt and QC release are separate stock commands. The receipt creates a held lot and signed ledger
 movement; only a Quality-authorized revision-checked release makes it eligible for reservation (ADR 0010).

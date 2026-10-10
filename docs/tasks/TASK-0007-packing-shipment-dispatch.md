@@ -33,10 +33,10 @@ Static assertions cover RLS, idempotency, packing preparation, reservation consu
 Shipping quantity is posted as a negative ledger entry, never by mutating a balance.
 
 ## Validation evidence (exact command + result)
-`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (16 files, 38 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
+`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (31 files, 58 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-10. Hosted rollback integration passed on 2026-10-10: a prepared SAMPLE shipment dispatched once, a duplicate request returned the same shipment without a second ledger entry, and the transaction left no records behind.
 
 ## Docs updated
 `adr/0011-prepared-packing-shipment-command.md`, `docs/architecture.md` and `docs/domain-model.md`.
 
 ## Follow-ups / risks
-Hosted Supabase project creation remains unavailable through the connector's missing cost-confirmation endpoint.
+Parallel dispatch execution and deployed browser/device acceptance remain open; the hosted Supabase project is connected.

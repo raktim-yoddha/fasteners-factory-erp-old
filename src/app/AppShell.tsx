@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
 import { UpdatePrompt } from '@/pwa/UpdatePrompt'
 import { OperationsWorkspace } from '@/app/OperationsWorkspace'
 import { SignInScreen } from '@/auth/SignInScreen'
@@ -10,6 +11,8 @@ import { useDashboardSummary } from '@/features/dashboard/useDashboardSummary'
 import { OrderCommandCenterPanel } from '@/features/dashboard/OrderCommandCenterPanel'
 import { useOrderCommandCenter } from '@/features/dashboard/useOrderCommandCenter'
 import { GlobalSearchPanel } from '@/features/search/GlobalSearchPanel'
+import { recordKindFromSearchResult } from '@/features/records/recordTypes'
+import { RecordWorkspacePanel } from '@/features/records/RecordWorkspacePanel'
 import { useGlobalSearch } from '@/features/search/useGlobalSearch'
 import { MasterDataSetupPanel } from '@/features/master-data/MasterDataSetupPanel'
 import { useCreateMasterData } from '@/features/master-data/useCreateMasterData'
@@ -27,6 +30,7 @@ import { DispatchPanel } from '@/features/dispatch/DispatchPanel'
 import { useDispatchCommands, useDispatchRecords } from '@/features/dispatch/useDispatchWorkflow'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { formatCommandError } from '@/lib/commandError'
+import { useNetworkStatus } from '@/pwa/useNetworkStatus'
 
 export function AppShell() {
   const { loading, session } = useAuthSession()
@@ -34,6 +38,9 @@ export function AppShell() {
   const bootstrapCompany = useInitialCompanyBootstrap()
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const online = useNetworkStatus()
+  const navigate = useNavigate()
+  const { recordId, recordType } = useParams()
   const accessibleCompanies = companies.data ?? []
   const activeCompanyId = accessibleCompanies.length === 1
     ? accessibleCompanies[0]!.id
@@ -94,7 +101,10 @@ export function AppShell() {
         companyId={activeCompanyId}
         onCompanyChange={setSelectedCompanyId}
         canBootstrap={companies.isSuccess && accessibleCompanies.length === 0}
-        searchPanel={<GlobalSearchPanel companyId={activeCompanyId} error={globalSearch.isError} loading={globalSearch.isFetching} onQueryChange={setSearchQuery} query={searchQuery} results={globalSearch.data ?? []} />}
+        online={online}
+        searchPanel={<GlobalSearchPanel companyId={activeCompanyId} error={globalSearch.isError} loading={globalSearch.isFetching} onQueryChange={setSearchQuery} onOpenRecord={(result) => { const kind = recordKindFromSearchResult(result); if (kind) navigate(`/records/${kind}/${result.record_id}`) }} query={searchQuery} results={globalSearch.data ?? []} />}
+        recordPanel={recordType || recordId ? <RecordWorkspacePanel companyId={activeCompanyId} recordId={recordId} recordType={recordType} onBack={() => navigate('/')} onOpenRecord={(kind, id) => navigate(`/records/${kind}/${id}`)} /> : null}
+        onClearSearch={() => setSearchQuery('')}
         salesPanel={<>
           <CreateRfqPanel
             companyId={activeCompanyId}
@@ -130,8 +140,8 @@ export function AppShell() {
             onCreate={async (command) => createMasterData.mutateAsync(command)}
           />
         }
-        stockPanel={<StockActionsPanel companyId={activeCompanyId} options={masterDataOptions.data ?? { plants: [], warehouses: [], items: [], locations: [] }} lots={stockLots.data ?? []} records={commercialRecords.data ?? { rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }} receiving={stockCommands.receipt.isPending} releasing={stockCommands.release.isPending} reserving={stockCommands.reserve.isPending} onReceive={async (input) => { await stockCommands.receipt.mutateAsync(input) }} onRelease={async (input) => { await stockCommands.release.mutateAsync(input) }} onReserve={async (input) => { await stockCommands.reserve.mutateAsync(input) }} />}
-        dispatchPanel={<DispatchPanel companyId={activeCompanyId} commercial={commercialRecords.data ?? { rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }} dispatchRecords={dispatchRecords.data ?? { reservations: [], shipments: [] }} busy={dispatchCommands.prepare.isPending || dispatchCommands.dispatch.isPending} onPrepare={(input) => dispatchCommands.prepare.mutateAsync(input)} onDispatch={(input) => dispatchCommands.dispatch.mutateAsync(input)} />}
+        stockPanel={<StockActionsPanel companyId={activeCompanyId} online={online} options={masterDataOptions.data ?? { plants: [], warehouses: [], items: [], locations: [] }} lots={stockLots.data ?? []} records={commercialRecords.data ?? { rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }} receiving={stockCommands.receipt.isPending} releasing={stockCommands.release.isPending} reserving={stockCommands.reserve.isPending} onReceive={async (input) => { await stockCommands.receipt.mutateAsync(input) }} onRelease={async (input) => { await stockCommands.release.mutateAsync(input) }} onReserve={async (input) => { await stockCommands.reserve.mutateAsync(input) }} />}
+        dispatchPanel={<DispatchPanel companyId={activeCompanyId} commercial={commercialRecords.data ?? { rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }} dispatchRecords={dispatchRecords.data ?? { reservations: [], shipments: [] }} busy={dispatchCommands.prepare.isPending || dispatchCommands.dispatch.isPending} online={online} onPrepare={(input) => dispatchCommands.prepare.mutateAsync(input)} onDispatch={(input) => dispatchCommands.dispatch.mutateAsync(input)} />}
         commandCenterPanel={<OrderCommandCenterPanel rows={orderCommandCenter.data ?? []} loading={orderCommandCenter.isLoading} error={orderCommandCenter.isError} />}
       />
       <UpdatePrompt />

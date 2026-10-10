@@ -56,6 +56,12 @@
 
   .status-online { @apply border-safe bg-safe-surface text-safe; }
   .status-offline { @apply border-warning bg-warning-surface text-warning; }
+
+  .search-result { @apply block w-full cursor-pointer rounded-md text-left transition-colors hover:bg-canvas focus-visible:outline-none; }
+
+  .record-panel { @apply mt-6 rounded-xl border border-line bg-panel p-5; }
+
+  .keyboard-dialog { @apply w-[min(32rem,calc(100%-2rem))] rounded-xl border border-line bg-panel p-5 text-ink shadow-lg backdrop:bg-slate-950/30; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { AccessibleCompany } from '@/features/company/useAccessibleCompanies'
 import type { DashboardSummary } from '@/features/dashboard/useDashboardSummary'
 import { isSupabaseConfigured } from '@/lib/supabase'
+import { NetworkStatus } from '@/pwa/NetworkStatus'
+import { KeyboardHelpDialog } from '@/app/KeyboardHelpDialog'
 
 const modules = [
   ['Command center', 'Order status across sales, stock, quality and dispatch.'],
@@ -27,14 +29,29 @@ type OperationsWorkspaceProps = {
   dispatchPanel: ReactNode
   commandCenterPanel: ReactNode
   searchPanel: ReactNode
+  recordPanel?: ReactNode
   canBootstrap: boolean
+  online?: boolean
+  onClearSearch?: () => void
 }
 
 export function OperationsWorkspace({
-  email, onSignOut, summary, summaryError, companies, companyId, onCompanyChange, salesPanel, setupPanel, masterDataPanel, stockPanel, dispatchPanel, commandCenterPanel, searchPanel, canBootstrap
+  email, onSignOut, summary, summaryError, companies, companyId, onCompanyChange, salesPanel, setupPanel, masterDataPanel, stockPanel, dispatchPanel, commandCenterPanel, searchPanel, recordPanel, canBootstrap, online = true, onClearSearch = () => undefined
 }: OperationsWorkspaceProps) {
   const [activeModule, setActiveModule] = useState(0)
   const [moduleName, moduleDescription] = modules[activeModule]!
+
+  useEffect(() => {
+    const isEditable = (target: EventTarget | null) => target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+    const onKeyDown = (event: KeyboardEvent) => {
+      const search = document.getElementById('global-search-input') as HTMLInputElement | null
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); search?.focus(); return }
+      if (event.key === '/' && !isEditable(event.target)) { event.preventDefault(); search?.focus(); return }
+      if (event.key === 'Escape' && search) { onClearSearch(); search.blur() }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClearSearch])
 
   return (
     <main className="min-h-dvh bg-canvas text-ink">
@@ -46,6 +63,7 @@ export function OperationsWorkspace({
           </div>
           <div className="flex items-center gap-3">
             <p className="hidden text-sm text-muted sm:block">{email}</p>
+            <KeyboardHelpDialog />
             <button className="secondary-button" type="button" onClick={() => void onSignOut()}>Sign out</button>
           </div>
         </div>
@@ -73,9 +91,7 @@ export function OperationsWorkspace({
               <h2 className="mt-1 text-2xl font-bold tracking-tight" id="workspace-title">{moduleName}</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{moduleDescription}</p>
             </div>
-            <span className={isSupabaseConfigured ? 'status status-online' : 'status status-offline'}>
-              {isSupabaseConfigured ? 'Backend connected' : 'Backend setup required'}
-            </span>
+            <div className="flex flex-wrap justify-end gap-2"><NetworkStatus /><span className={isSupabaseConfigured ? 'status status-online' : 'status status-offline'}>{isSupabaseConfigured ? 'Backend connected' : 'Backend setup required'}</span></div>
           </div>
           <label className="form-label mt-5 max-w-sm">Active company
             <select className="form-input" value={companyId ?? ''} onChange={(event) => onCompanyChange(event.target.value)}>
@@ -108,11 +124,8 @@ export function OperationsWorkspace({
               </article>
             ))}
           </section>
-          {activeModule === 0 ? commandCenterPanel : null}
-          {activeModule === 1 ? salesPanel : null}
-          {activeModule === 4 ? masterDataPanel : null}
-          {activeModule === 2 ? stockPanel : null}
-          {activeModule === 3 ? dispatchPanel : null}
+          {!online && !recordPanel ? <p className="mt-6 rounded-lg border border-warning bg-warning-surface p-3 text-sm text-warning" id="offline-read-only" role="alert">Blocked because this device is offline. Commands are disabled until the server connection returns.</p> : null}
+          {recordPanel ?? <fieldset aria-describedby={online ? undefined : 'offline-read-only'} className="min-w-0 border-0 p-0" disabled={!online}>{activeModule === 0 ? commandCenterPanel : null}{activeModule === 1 ? salesPanel : null}{activeModule === 4 ? masterDataPanel : null}{activeModule === 2 ? stockPanel : null}{activeModule === 3 ? dispatchPanel : null}</fieldset>}
         </section>
       </div>
     </main>

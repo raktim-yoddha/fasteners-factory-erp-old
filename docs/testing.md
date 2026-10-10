@@ -15,6 +15,10 @@ CI runs all four commands on Ubuntu. Unit tests use JSDOM only where a browser D
 scripts remain Node-environment tests. Command-error unit tests assert that known protected-command failures retain
 their operator meaning while unknown backend details are never rendered.
 
+UX foundation tests cover keyboard search discovery, editable-control exclusions, offline critical-action disabling,
+search-result record navigation and the permitted/unavailable audit-timeline states. Browser E2E opens a generated
+SAMPLE record from global search through its durable record URL before continuing the existing manufacturing flow.
+
 ## Hosted end-to-end suite
 
 `pnpm e2e` runs Chromium automatically. Locally it starts or reuses the production preview and can sign in an existing

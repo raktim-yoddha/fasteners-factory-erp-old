@@ -57,6 +57,10 @@ The latter is a read-only, sales-authorized boundary that reports independent co
 dispatch states without relying on browser-side joins or unit-unsafe quantity aggregation.
 Global identifier search uses the read-only, `SECURITY INVOKER` `search_company_records` RPC. It returns at most 20
 normalized labels and relies on the caller's existing source-table RLS rather than adding a broad search privilege.
+Record workspaces use durable browser routes and typed direct reads from those same current, RLS-scoped source tables;
+they do not add a record-aggregation API. A result opens only when the caller can already read it. Related records are
+individually read through their existing RLS policies, and the audit timeline remains visible only to roles with the
+existing `audit.read` permission (ADR 0015).
 The master-data setup feature uses small typed browser adapters for single-table, RLS-protected customer, supplier,
 item, drawing-header, warehouse, location and work-centre creation; material or stateful transitions remain database
 commands.

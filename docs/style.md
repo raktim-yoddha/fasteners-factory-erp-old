@@ -14,6 +14,23 @@ Explains visual decisions; rules live in `AGENTS.md`. **DESIGN PROPOSAL** until 
   phone widths. It never labels unavailable records as sample operational data.
 - Command failures are warning alerts beginning `Blocked because …`; they give a reason in plain English and never
   expose database error text. Success remains a separate status message.
+- When offline, the operations panels are a read-only surface: all command controls are disabled and the page
+  explains why. Stock and dispatch repeat that explanation beside their critical commands.
+
+## Reusable operations patterns
+
+- `OperationsWorkspace` provides the page header, responsive primary navigation, live-status summary, active-company
+  selector and global-search placement. `RecordWorkspacePanel` provides the record header and contextual tabs.
+- Use a status label with its icon and a plain-language reason; use a warning callout for blocked work, not colour
+  alone. Loading, empty, unavailable and error states state what the operator can do next.
+- Use the shared button and input classes for the primary action, secondary action and field controls. Tables and
+  mobile summary cards are not introduced until a workflow needs the same data in both layouts.
+- The current component inventory is: page header, record header, status label, blocked callout, empty/loading/error
+  states, confirmation feedback, audit timeline, global-search field and result list, responsive navigation, and
+  primary/secondary action controls. Confirmation sheets, filter bars, data tables and mobile summary cards remain
+  later workflow-specific work.
+- `Ctrl/Cmd+K`, `/` outside editable fields, and `Esc` are documented navigation shortcuts. They focus or clear
+  search only; they never invoke a factory command.
 
 ## Installed-PWA behavior
 

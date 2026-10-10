@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { DispatchPanel } from '@/features/dispatch/DispatchPanel'
 
 describe('DispatchPanel', () => {
@@ -15,5 +15,14 @@ describe('DispatchPanel', () => {
     fireEvent.change(screen.getByLabelText('Packed quantity'), { target: { value: '10' } })
     fireEvent.submit(screen.getByRole('button', { name: 'Prepare shipment' }).closest('form')!)
     expect(onPrepare).toHaveBeenCalledWith(expect.objectContaining({ salesOrderId: '00000000-0000-4000-8000-000000000002', reservationId: '00000000-0000-4000-8000-000000000005', expectedSalesOrderRevision: 4, quantity: '10' }))
+  })
+
+  it('disables packing and dispatch while offline', () => {
+    const view = render(<DispatchPanel companyId="00000000-0000-4000-8000-000000000001" online={false} commercial={{ rfqs: [], quotations: [], salesOrders: [], salesOrderLines: [] }} dispatchRecords={{ reservations: [], shipments: [] }} busy={false} onPrepare={vi.fn(async () => undefined)} onDispatch={vi.fn(async () => undefined)} />)
+
+    const scoped = within(view.container)
+    expect(scoped.getByRole('alert')).toHaveTextContent('Blocked because this device is offline')
+    expect(scoped.getByRole('button', { name: 'Prepare shipment' })).toBeDisabled()
+    expect(scoped.getByRole('button', { name: 'Dispatch shipment' })).toBeDisabled()
   })
 })

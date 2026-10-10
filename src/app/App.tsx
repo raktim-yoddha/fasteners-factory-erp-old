@@ -14,6 +14,7 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<AppShell />} />
+          <Route path="/records/:recordType/:recordId" element={<AppShell />} />
           <Route path="*" element={<Navigate replace to="/" />} />
         </Routes>
       </BrowserRouter>

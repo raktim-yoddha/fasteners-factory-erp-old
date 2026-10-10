@@ -34,7 +34,7 @@ async function authenticateSampleUser(page: Page) {
 test.describe('SAMPLE manufacturing path', () => {
   test.skip(!hasMagicLinkConfiguration && !hasPasswordSessionConfiguration, 'Requires either hosted magic-link secrets or local SAMPLE password-session credentials.')
 
-  test('runs bootstrap, commercial, stock and dispatch commands through the installed browser app', async ({ page }) => {
+  test('runs bootstrap, commercial, concurrent stock reservation and dispatch commands through the installed browser app', async ({ page }) => {
     const run = Date.now()
     const sample = {
       customerCode: `SAMPLE-CUST-${run}`,
@@ -51,6 +51,10 @@ test.describe('SAMPLE manufacturing path', () => {
       shipment: `SAMPLE-SHIP-${run}`,
       lot: `SAMPLE-LOT-${run}`,
     }
+    let browserApiKey = testSupabasePublishableKey
+    page.on('request', (request) => {
+      if (!browserApiKey && request.url().startsWith(testSupabaseUrl!)) browserApiKey = request.headers().apikey
+    })
     await authenticateSampleUser(page)
     await expect(page.getByRole('heading', { name: 'Fasteners Factory ERP' })).toBeVisible({ timeout: 15_000 })
 
@@ -148,16 +152,47 @@ test.describe('SAMPLE manufacturing path', () => {
     const reservationForm = page.locator('form').filter({ hasText: 'Reserve released lot' }).first()
     await reservationForm.getByLabel('Sales-order line').selectOption({ label: `${sample.salesOrder} — 10 pcs` })
     await reservationForm.getByLabel('Released lot').selectOption({ label: sample.lot })
-    await reservationForm.getByLabel('Quantity').fill('10')
-    await reservationForm.getByRole('button', { name: 'Reserve stock' }).click()
+    const [companyId, salesOrderLineId, lotId] = await Promise.all([
+      page.getByLabel('Active company').inputValue(),
+      reservationForm.getByLabel('Sales-order line').inputValue(),
+      reservationForm.getByLabel('Released lot').inputValue(),
+    ])
+    const concurrentReservations = await page.evaluate(async ({ companyId, salesOrderLineId, lotId, supabaseUrl, apiKey }) => {
+      const accessToken = Object.values(localStorage)
+        .map((value) => { try { return JSON.parse(value) as { access_token?: string } } catch { return null } })
+        .find((session) => typeof session?.access_token === 'string')?.access_token
+      if (!accessToken || !apiKey) throw new Error('The browser session did not expose Supabase credentials for the stock command test.')
+      const headers = { apikey: apiKey, Authorization: `Bearer ${accessToken}` }
+      const lineResponse = await fetch(`${supabaseUrl}/rest/v1/sales_order_lines?id=eq.${salesOrderLineId}&select=sales_order_id`, { headers })
+      if (!lineResponse.ok) throw new Error('The browser could not read the SAMPLE sales-order line.')
+      const [line] = await lineResponse.json() as Array<{ sales_order_id: string }>
+      if (!line) throw new Error('The SAMPLE sales-order line was not returned.')
+      const orderResponse = await fetch(`${supabaseUrl}/rest/v1/sales_orders?id=eq.${line.sales_order_id}&select=revision`, { headers })
+      if (!orderResponse.ok) throw new Error('The browser could not read the SAMPLE sales order.')
+      const [order] = await orderResponse.json() as Array<{ revision: number }>
+      if (!order) throw new Error('The SAMPLE sales order was not returned.')
+      const reserve = async () => {
+        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/reserve_finished_goods`, {
+          method: 'POST',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_company_id: companyId, p_sales_order_line_id: salesOrderLineId, p_lot_id: lotId, p_quantity: 6, p_expected_sales_order_revision: order.revision, p_idempotency_key: crypto.randomUUID() }),
+        })
+        return { ok: response.ok, body: await response.text() }
+      }
+      return Promise.all([reserve(), reserve()])
+    }, { companyId, salesOrderLineId, lotId, supabaseUrl: testSupabaseUrl!, apiKey: browserApiKey })
+    expect(concurrentReservations.filter((result) => result.ok)).toHaveLength(1)
+    expect(concurrentReservations.find((result) => !result.ok)?.body).toMatch(/REVISION_CONFLICT|INSUFFICIENT_AVAILABLE_STOCK/)
 
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Fasteners Factory ERP' })).toBeVisible()
     await page.getByRole('button', { name: 'Dispatch' }).click()
     const prepareForm = page.locator('form').filter({ hasText: 'Prepare packed shipment' }).first()
     await prepareForm.getByLabel('Sales order').selectOption({ label: `${sample.salesOrder} — open` })
-    await prepareForm.getByLabel('Active reservation').selectOption({ label: 'Reserved 10' })
+    await prepareForm.getByLabel('Active reservation').selectOption({ label: 'Reserved 6' })
     await prepareForm.getByLabel('Packing number').fill(sample.packing)
     await prepareForm.getByLabel('Shipment number').fill(sample.shipment)
-    await prepareForm.getByLabel('Packed quantity').fill('10')
+    await prepareForm.getByLabel('Packed quantity').fill('6')
     await prepareForm.getByRole('button', { name: 'Prepare shipment' }).click()
     const dispatchForm = page.locator('form').filter({ hasText: 'Dispatch shipment' }).first()
     await dispatchForm.getByLabel('Prepared shipment').selectOption({ label: sample.shipment })

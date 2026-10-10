@@ -23,7 +23,9 @@ disposable `SAMPLE` test user with `E2E_SUPABASE_URL`, `E2E_SUPABASE_PUBLISHABLE
 `E2E_BASE_URL`, `E2E_SUPABASE_URL`, `E2E_SUPABASE_SERVICE_ROLE_KEY` and `E2E_TEST_EMAIL`; the service-role key stays
 in the Node test runner and generates the approved test user's magic link. In both modes, the browser carries only an
 authenticated session and drives SAMPLE data through first-company bootstrap, master data, RFQ, feasibility,
-quotation, approval, sales order, receipt, QC release, reservation, packing and dispatch.
+quotation, approval, sales order, receipt, QC release, two competing stock reservations, packing and dispatch. Exactly
+one competing reservation succeeds; the other must receive a structured revision-conflict or insufficient-stock
+failure, proving the server command cannot oversell under concurrent calls.
 
 The suite intentionally skips when neither credential mode is configured. It must not target a shared or production
 project: bootstrap is correctly one-time, so hosted CI needs a new migrated project or disposable database branch.

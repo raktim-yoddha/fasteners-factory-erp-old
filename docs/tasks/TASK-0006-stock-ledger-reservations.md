@@ -33,10 +33,14 @@ Static assertions cover append-only grants, held-lot receipt/release, RLS, deriv
 The lot row is locked during reservation, serializing competing requests for the same lot.
 
 ## Validation evidence (exact command + result)
-`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (15 files, 36 tests passed); `pnpm build` (pass); `git diff --check` (pass), run 2026-10-09.
+`pnpm typecheck` (pass); `pnpm lint` (pass); `pnpm test` (31 files, 58 tests passed); `pnpm e2e` (one Chromium
+manufacturing-path test passed against connected hosted Supabase); `pnpm build` (pass); `git diff --check` (pass),
+run 2026-10-10. Hosted rollback integration passed 2026-10-10: receipt held the SAMPLE lot until release, reservation
+was idempotent, and an oversell attempt returned `INSUFFICIENT_AVAILABLE_STOCK`.
 
 ## Docs updated
 `adr/0010-qc-hold-before-reservation.md`, `docs/architecture.md` and `docs/domain-model.md`.
 
 ## Follow-ups / risks
-Hosted Supabase project creation remains unavailable through the connector's missing cost-confirmation endpoint.
+Parallel reservation stress execution remains open; idempotency and oversell rejection are covered by the hosted
+rollback integration.

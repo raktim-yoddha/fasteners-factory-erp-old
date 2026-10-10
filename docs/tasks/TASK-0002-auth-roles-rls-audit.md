@@ -42,13 +42,14 @@ helpers with explicit execute grants.
 ## Validation evidence (exact command + result)
 - `pnpm typecheck` — passed.
 - `pnpm lint` — passed.
-- `pnpm test` — passed: 17 files, 40 tests, including static RLS boundary assertions.
+- `pnpm test` — passed: 31 files, 58 tests, including static RLS boundary assertions.
 - `pnpm build` — passed: production PWA build generated.
-- Hosted migration/RLS integration — pending Supabase project creation; the connector's cost-confirmation endpoint remains unavailable.
+- Hosted browser integration — passed 2026-10-10 against the connected Supabase project with a disposable SAMPLE
+  account. The sign-in session, active-company scope and protected workflow commands completed through dispatch.
 
 ## Docs updated
 `adr/0012-initial-tenant-bootstrap.md`, `docs/domain-model.md`, `docs/security.md`, `docs/architecture.md`, `docs/tasks/TASKS.md` and this task file.
 
 ## Follow-ups / risks
-The connected Supabase plugin lists the organization but its project-cost confirmation endpoint is unavailable,
-blocking hosted migration execution.
+Cross-company membership, plant and audit-table denial still needs a fresh isolated multi-tenant test project or
+branch. The current project is intentionally not used for destructive tenant-reset testing.

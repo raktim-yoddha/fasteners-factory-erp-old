@@ -41,10 +41,10 @@ Every drawing revision pins to a company-scoped drawing; approved revision updat
 ## Validation evidence (exact command + result)
 - `pnpm typecheck` — passed.
 - `pnpm lint` — passed.
-- `pnpm test` — passed: 28 files, 55 tests.
+- `pnpm test` — passed: 31 files, 58 tests.
 - `pnpm build` — passed: production PWA output and service worker generated.
-- `pnpm e2e` — passed with the one hosted browser suite correctly skipped because isolated deployment secrets are not
-  configured locally; its manual CI workflow fails rather than skips when those secrets are missing.
+- `pnpm e2e` — passed: one Chromium manufacturing-path test created SAMPLE master data and continued through the
+  protected commercial, stock and dispatch workflow against the connected hosted Supabase project.
 - `git diff --check` — passed.
 - Hosted migration/RLS integration — passed 2026-10-10 through the connected hosted project. The rollback test
   created all seven supported master-record types as the SAMPLE administrator, rejected an unauthorized supplier

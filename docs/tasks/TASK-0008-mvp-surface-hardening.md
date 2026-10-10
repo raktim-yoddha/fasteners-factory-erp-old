@@ -53,7 +53,7 @@ company, order, shipment and ledger rows remained. The new command is unavailabl
 `authenticated` only.
 
 ## Docs updated
-`README.md`, `adr/0004-domain-integrity.md`, `adr/0007-passwordless-approved-user-sign-in.md`, `adr/0012-initial-tenant-bootstrap.md`, `adr/0013-hosted-end-to-end-verification.md`, `docs/architecture.md`, `docs/domain-model.md`, `docs/security.md`, `docs/testing.md`, `docs/deployment.md` and this task record.
+`README.md`, `docs/user-manual.md`, `adr/0004-domain-integrity.md`, `adr/0007-passwordless-approved-user-sign-in.md`, `adr/0012-initial-tenant-bootstrap.md`, `adr/0013-hosted-end-to-end-verification.md`, `docs/architecture.md`, `docs/domain-model.md`, `docs/security.md`, `docs/testing.md`, `docs/deployment.md` and this task record.
 
 ## Follow-ups / risks
 The hosted Supabase project is ready for an administrator-created approved user. Device installation, standalone

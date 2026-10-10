@@ -242,6 +242,7 @@ Read the [roadmap](docs/roadmap.md), [task board](docs/tasks/TASKS.md), and [ope
 - [Domain model](docs/domain-model.md)
 - [Security](docs/security.md)
 - [Testing](docs/testing.md)
+- [Operator manual](docs/user-manual.md)
 - [Deployment](docs/deployment.md)
 - [Roadmap](docs/roadmap.md)
 - [Open questions](docs/open-questions.md)

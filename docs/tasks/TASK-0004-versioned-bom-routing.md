@@ -28,7 +28,7 @@ tests, task board.
 All tables are tenant-scoped/RLS-protected. Revision children use a private draft check, so an approved header cannot be
 used to mutate its BOM lines or routing operations.
 
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 Schema assertions cover immutability triggers and draft-only child policies. Hosted rollback tests create SAMPLE draft
 revisions and children, approve them, reject header updates and confirm approved child updates affect no rows.
 
@@ -50,4 +50,11 @@ Time and quantity values use `NUMERIC`, not JavaScript floating point. Units rem
 `docs/domain-model.md`, `docs/testing.md`, `docs/tasks/TASKS.md` and this task file.
 
 ## Follow-ups / risks
-The task deliberately has no drawing/BOM/routing approval UI; that workflow needs its own scoped product decision.
+Drawing/file and BOM/routing review/approval UI is implemented by TASK-0013/TASK-0015; original versioning scope remains complete.
+
+
+## Reconciled validation (2026-10-12)
+`pnpm test:factory` PASS: typecheck, lint, 186 tests/62 files, 15 rollback SQL suites, read-only operations checks,
+production PWA build/chunk checks, 20 browser journeys, encrypted DB/private-object backup and restored-DB regressions;
+131.4 seconds. Recovery compared 114 tables and 93 private files. Later archive CLI guard test passed in the focused
+operations suite; final unit count is recorded in TASK-0016. Installed factory acceptance remains TASK-0008.

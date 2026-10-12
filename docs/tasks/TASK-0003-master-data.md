@@ -1,5 +1,5 @@
 # TASK-0003 — Tenant-scoped master data
-- Status: IN_PROGRESS
+- Status: IN_REVIEW
 - Owner/agent: Codex
 - Milestone: L2
 - Related ADRs / docs: ADR 0002, 0004, 0006; `docs/domain-model.md`, `docs/security.md`
@@ -30,7 +30,7 @@ global search.
 ## Data migration and authorization implications
 All tables have `company_id`, RLS and policy-predicate indexes. Permissions reuse the role mapping created by TASK-0002.
 
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 Schema assertions prove RLS, company scope and approved-revision immutability. UI tests prove the three formerly
 missing record types retain the selected company and parent references. The hosted rollback test proves authorized
 creation of all supported record types and rejects an unauthorized supplier insert.
@@ -58,3 +58,10 @@ Every drawing revision pins to a company-scoped drawing; approved revision updat
 ## Follow-ups / risks
 Browser/device acceptance still needs a Cloudflare Pages deployment and an approved Auth user; the hosted Supabase
 project itself is connected and has been integration-tested.
+
+
+## Reconciled validation (2026-10-12)
+`pnpm test:factory` PASS: typecheck, lint, 186 tests/62 files, 15 rollback SQL suites, read-only operations checks,
+production PWA build/chunk checks, 20 browser journeys, encrypted DB/private-object backup and restored-DB regressions;
+131.4 seconds. Recovery compared 114 tables and 93 private files. Later archive CLI guard test passed in the focused
+operations suite; final unit count is recorded in TASK-0016. Installed factory acceptance remains TASK-0008.

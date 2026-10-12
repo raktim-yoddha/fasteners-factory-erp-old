@@ -2,7 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 
-const customerSchema = z.object({ id: z.uuid(), code: z.string(), name: z.string() })
+const customerSchema = z.object({
+  id: z.uuid(),
+  code: z.string(),
+  name: z.string(),
+})
 export type CustomerOption = z.infer<typeof customerSchema>
 
 export function useCustomers(companyId: string | null) {
@@ -10,7 +14,8 @@ export function useCustomers(companyId: string | null) {
     queryKey: ['customers', companyId],
     enabled: Boolean(companyId && supabase),
     queryFn: async (): Promise<CustomerOption[]> => {
-      if (!supabase || !companyId) throw new Error('A company is required to load customers.')
+      if (!supabase || !companyId)
+        throw new Error('A company is required to load customers.')
       const { data, error } = await supabase
         .from('customers')
         .select('id, code, name')
@@ -19,6 +24,6 @@ export function useCustomers(companyId: string | null) {
         .order('name')
       if (error) throw error
       return z.array(customerSchema).parse(data)
-    }
+    },
   })
 }

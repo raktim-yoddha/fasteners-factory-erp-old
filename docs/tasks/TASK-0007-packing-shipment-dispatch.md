@@ -1,5 +1,5 @@
 # TASK-0007 — Packing, shipment and guarded dispatch
-- Status: IN_PROGRESS
+- Status: IN_REVIEW
 - Owner/agent: Codex
 - Milestone: L3
 - Related ADRs / docs: ADR 0004; `docs/domain-model.md`; `docs/security.md`
@@ -26,7 +26,7 @@ Carrier integration, tax documents, printed labels and hosted integration tests.
 ## Data migration and authorization implications
 Authenticated callers have read-only access to shipment records. Security-definer commands own packing preparation, shipment state, reservation, ledger and audit changes.
 
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 Static assertions cover RLS, idempotency, packing preparation, reservation consumption and structured dispatch errors. Hosted tests will cover parallel dispatch attempts.
 
 ## Implementation notes
@@ -43,3 +43,10 @@ request returned the same shipment without a second ledger entry, and the transa
 
 ## Follow-ups / risks
 Parallel dispatch execution and deployed browser/device acceptance remain open; the hosted Supabase project is connected.
+
+
+## Reconciled validation (2026-10-12)
+`pnpm test:factory` PASS: typecheck, lint, 186 tests/62 files, 15 rollback SQL suites, read-only operations checks,
+production PWA build/chunk checks, 20 browser journeys, encrypted DB/private-object backup and restored-DB regressions;
+131.4 seconds. Recovery compared 114 tables and 93 private files. Later archive CLI guard test passed in the focused
+operations suite; final unit count is recorded in TASK-0016. Installed factory acceptance remains TASK-0008.

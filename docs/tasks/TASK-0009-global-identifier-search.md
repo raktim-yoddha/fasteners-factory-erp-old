@@ -29,13 +29,13 @@ integration and browser tests, ADR and product/security/testing/task documentati
 The RPC is `SECURITY INVOKER`, grants execution only to `authenticated`, and relies on each source table's existing
 RLS. It returns an ID, a type label and a concise operator label only.
 
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 Unit tests assert the function is invoker-scoped, bounded and avoids public execution. Hosted tests assert an
 authorized SAMPLE operator finds a company record while a user without membership receives no result. Browser E2E
 uses a generated identifier after setup.
 
 ## Implementation notes
-Queries shorter than two characters are rejected before database lookup; all core workflows remain AI-off.
+Queries shorter than two characters are rejected before database lookup; all core workflows are deterministic.
 
 ## Validation evidence (exact command + result)
 - `pnpm typecheck` — passed.
@@ -58,3 +58,10 @@ Queries shorter than two characters are rejected before database lookup; all cor
 
 ## Follow-ups / risks
 The first version intentionally does not rank fuzzy matches or search uploaded drawing content.
+
+
+## Reconciled validation (2026-10-12)
+`pnpm test:factory` PASS: typecheck, lint, 186 tests/62 files, 15 rollback SQL suites, read-only operations checks,
+production PWA build/chunk checks, 20 browser journeys, encrypted DB/private-object backup and restored-DB regressions;
+131.4 seconds. Recovery compared 114 tables and 93 private files. Later archive CLI guard test passed in the focused
+operations suite; final unit count is recorded in TASK-0016. Installed factory acceptance remains TASK-0008.

@@ -1,53 +1,31 @@
 # Security
 
-**DESIGN PROPOSAL** — verify against a hosted Supabase project before production use.
+Implemented generic boundaries verified with SAMPLE fixtures on local and hosted Supabase. This is not a certified production security audit. Rules live in `AGENTS.md`.
 
-## L1 authorization boundary
+## Identity and company authorization
 
-Browser clients use only a Supabase URL and publishable key. The service-role key never enters `.env.example`,
-Cloudflare Pages configuration or the application bundle. Supabase Auth supplies identity; public tables use RLS
-and permission state is held in protected tables, not `raw_user_meta_data`.
+Browser configuration contains only the project URL/publishable key. Approved accounts use passwordless sign-in with user creation disabled. Auth, active company membership and protected role mappings govern reads/actions; user metadata is never permission truth. Administration changes existing accounts through a serialized command and protects the last active administrator. Self-access changes and sign-out clear private query caches. Company changes reset draft/paging context.
 
-`private.is_company_member` and `private.has_company_permission` are narrowly scoped `SECURITY DEFINER`
-helpers in an unexposed schema. `PUBLIC` execution is revoked; only `authenticated` can invoke them through RLS.
-Every policy declares `TO authenticated`; write policies have both `USING` and `WITH CHECK`.
+Every exposed business table has RLS. Browser grants for event/operational tables are SELECT-only. Trusted atomic commands validate auth/company permission, transition, revision, units/quantities and idempotency, then append audit/ledger truth. Anonymous/PUBLIC execution is revoked. Public SECURITY DEFINER commands intentionally permit authenticated execution: permission checks inside them provide the protected write boundary, not direct table mutation.
 
-## Auth and command boundaries
+Search, scanner lookup, paged related records and operational views preserve caller RLS through SECURITY INVOKER where applicable. Literal filters avoid wildcard injection; bigint event IDs remain text. Read access never grants a transition.
 
-Passwordless email links use `shouldCreateUser: false`, and the committed Supabase configuration disables both root
-and email sign-up. An administrator must create the first approved Auth user; the browser never provisions users or
-assigns roles. The hosted project must retain that Auth setting and list the deployed HTTPS URL as an allowed redirect.
+## Documents and imports
 
-Transactional public RPCs are intentionally `SECURITY DEFINER`: each explicitly revokes anonymous and `PUBLIC`
-execution, requires `auth.uid()`, then validates the caller's protected company permission. The read-only
-`get_order_command_center` RPC follows the same pattern and requires `sales.read`; it is the only cross-domain
-read used by the browser Command Center.
+The factory-evidence bucket is private. Drawing/certificate uploads bind company-owned records, verified byte size/hash and immutable approved revisions. Downloads recheck bytes; failed requests do not authorize replacement content. Certificate references alone are not uploaded evidence. CSV ingress is bounded/strict, persists the exact preview/source, and revalidates before atomic apply without overwrite. Approved export snapshots retain exact signed events/currencies.
 
-`search_company_records` is intentionally different: it is `SECURITY INVOKER`, explicitly unavailable to `anon`,
-and queries each source table as the caller. Existing RLS policies therefore filter every returned identifier without
-adding an all-records search permission.
+## Device and delivery boundary
 
-## Hosted advisor evidence (2026-10-10)
+Service-worker cache contains static assets, not REST/Auth/Storage responses. Offline commands remain disabled; no hidden queue or server-success claim exists. Installed shell recovery was exercised automatically with an unexpired SAMPLE session. Update reload requires explicit confirmation. Cloudflare CSP restricts scripts, framing, objects and form origins; the shared policy allows only same-origin and Supabase cloud connections. Native scanner input still goes through bounded exact lookup and current RLS.
 
-Supabase security advisors reported twelve `authenticated_security_definer_function_executable` warnings. These are
-the intended browser-callable protected RPCs: initial-company bootstrap, commercial transitions, stock receipt/
-release/reservation, packing/dispatch, and the Command Center. Source review confirms that each requires
-`auth.uid()` and a protected company permission before accessing business truth; anonymous and `PUBLIC` execution
-are revoked. The warning is therefore monitored evidence, not an instruction to remove the authenticated RPC grant.
+## Operations secrets and backups
 
-The same advisor reported that Supabase Auth leaked-password protection is disabled. The production app uses
-passwordless email links, but the project owner should still enable that dashboard control before granting any
-password-based sign-in or recovery path. This is a dashboard setting and is not stored in source code.
+Read-only backup/preflight tools run outside the browser. Database password, Management API token, Storage service credential and encryption key belong only in the operations runner. Remote connections must match the project and use encrypted direct/session-pool connections. Backup output is AES-256-GCM authenticated ciphertext with an encrypted manifest and per-entry hashes. Lost keys are unrecoverable; retain separate offline custody. Plaintext appears only after explicit unpack into a new directory. Exports reject changed sources, missing bytes and capacity overflow.
 
-Performance advisory findings for unindexed foreign keys and unused indexes are informational on the current SAMPLE
-dataset. Do not bulk-add indexes purely to silence the advisor: retain tenant/RLS indexes and add a measured index
-only when a real production query plan shows the need.
+GitHub live exports are disabled until production-operations variables/secrets are configured. Only `.fferp` artifacts are uploaded; no env/plaintext dump. Routine and weekly recovery proofs use SAMPLE local DBs and owned temporary targets. Neither runs a production restore. Hosting/Auth delivery/configuration and key custody require separate recovery records.
 
-## Current limits
+## Hosted advisor evidence (2026-10-12)
 
-There is no user-invitation UI, real factory data, storage bucket, service-role browser operation or deployed Pages
-URL yet. Passwordless email delivery, installation on the target Windows and Android devices, and unskipped browser
-E2E remain deployment acceptance work.
+Hosted SAMPLE advisors reported 58 authenticated SECURITY DEFINER executable warnings. These are the intentional protected command APIs; outsider/permission regressions pass. Do not grant direct browser writes or remove necessary execution merely to silence the warning. [Advisor explanation](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
 
-The service-role key for hosted E2E belongs only in a manually triggered GitHub Actions runner secret for an isolated
-test project. It is not a Pages variable and is never available to the browser.
+Hosted Auth leaked-password protection remains disabled. The production gate explicitly blocks this unverified setting; source code cannot change the dashboard configuration. [Official setting](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). An owner-configured production environment, access review, real device evidence and actual hosted restoration are still necessary. No production deployment, real emails or real factory data were introduced.

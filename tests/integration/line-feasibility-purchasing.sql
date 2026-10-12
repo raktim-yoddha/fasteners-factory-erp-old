@@ -1,0 +1,40 @@
+begin;
+select set_config('app.sample_company_id',gen_random_uuid()::text,true);
+select set_config('app.sample_operator_id',gen_random_uuid()::text,true);
+insert into auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
+ values(current_setting('app.sample_operator_id')::uuid,'authenticated','authenticated','sample+'||current_setting('app.sample_operator_id')||'@invalid.test',now(),'{"provider":"email","providers":["email"]}','{"display_name":"SAMPLE Operator"}',now(),now());
+insert into public.companies(id,name,created_by) values(current_setting('app.sample_company_id')::uuid,'SAMPLE Line Planning Factory',current_setting('app.sample_operator_id')::uuid);
+insert into public.company_memberships(company_id,user_id) values(current_setting('app.sample_company_id')::uuid,current_setting('app.sample_operator_id')::uuid);
+insert into public.user_company_roles(company_id,user_id,role) values(current_setting('app.sample_company_id')::uuid,current_setting('app.sample_operator_id')::uuid,'admin');
+set local role authenticated;
+select set_config('request.jwt.claim.sub',current_setting('app.sample_operator_id'),true);
+do $$
+declare c uuid:=current_setting('app.sample_company_id')::uuid;a uuid;b uuid;cust uuid;s1 uuid;s2 uuid;rfq uuid;l1 uuid;l2 uuid;r1 uuid;q uuid;req uuid;po uuid;payload jsonb;
+begin
+ insert into public.items(company_id,sku,description,base_uom) values(c,'SAMPLE-A','SAMPLE Bolt','pcs') returning id into a;
+ insert into public.items(company_id,sku,description,base_uom) values(c,'SAMPLE-B','SAMPLE Nut','pcs') returning id into b;
+ insert into public.customers(company_id,code,name) values(c,'SAMPLE-C','SAMPLE Customer') returning id into cust;
+ insert into public.suppliers(company_id,code,name) values(c,'SAMPLE-S1','SAMPLE Supplier One') returning id into s1;
+ insert into public.suppliers(company_id,code,name) values(c,'SAMPLE-S2','SAMPLE Supplier Two') returning id into s2;
+ rfq:=public.create_rfq(c,'SAMPLE-RFQ',cust,'SAMPLE different items',jsonb_build_array(jsonb_build_object('item_id',a,'requested_description','SAMPLE Bolt','quantity','10','uom','pcs'),jsonb_build_object('item_id',b,'requested_description','SAMPLE Nut','quantity','10','uom','pcs')),'rfq');
+ select id into l1 from public.rfq_lines where rfq_id=rfq and item_id=a;select id into l2 from public.rfq_lines where rfq_id=rfq and item_id=b;
+ begin perform public.record_feasibility(c,rfq,'feasible',null,null,null,'SAMPLE shared',1,'whole');raise exception 'SAMPLE_MIXED_REVIEW_ALLOWED';exception when others then if sqlerrm<>'RFQ_LINE_REQUIRED' then raise;end if;end;
+ payload:=jsonb_build_object('line_id',l1,'item_id',a,'status','conditional','conditions','SAMPLE confirm finish','expected_revision',1);
+ r1:=public.record_rfq_line_feasibility(c,payload,'line-one');
+ if public.record_rfq_line_feasibility(c,payload,'line-one')<>r1 then raise exception 'SAMPLE_LINE_RETRY_CHANGED';end if;
+ begin perform public.record_rfq_line_feasibility(c,jsonb_set(payload,'{status}','"feasible"'),'line-one');raise exception 'SAMPLE_LINE_RETRY_CONTENT_CHANGED';exception when others then if sqlerrm<>'IDEMPOTENCY_CONFLICT' then raise;end if;end;
+ perform public.record_rfq_line_feasibility(c,jsonb_build_object('line_id',l2,'item_id',b,'status','not_feasible','conditions','SAMPLE unsupported operation','expected_revision',2),'line-two');
+ begin perform public.create_quotation(c,rfq,'SAMPLE-NOLINE-Q','INR',current_date+30,jsonb_build_array(jsonb_build_object('item_id',a,'quantity','10','uom','pcs','unit_price','1')),'no-line');raise exception 'SAMPLE_LINE_NOT_SELECTED';exception when others then if sqlerrm<>'RFQ_LINE_REQUIRED' then raise;end if;end;
+ begin perform public.create_quotation(c,rfq,'SAMPLE-BADLINE-Q','INR',current_date+30,jsonb_build_array(jsonb_build_object('item_id',b,'rfq_line_id',l2,'quantity','10','uom','pcs','unit_price','1')),'bad-line');raise exception 'SAMPLE_UNQUALIFIED_LINE_QUOTED';exception when others then if sqlerrm<>'RFQ_LINE_NOT_QUALIFIED' then raise;end if;end;
+ q:=public.create_quotation(c,rfq,'SAMPLE-Q','INR',current_date+30,jsonb_build_array(jsonb_build_object('item_id',a,'rfq_line_id',l1,'quantity','10','uom','pcs','unit_price','1')),'quote');
+ if not exists(select 1 from public.quotation_lines where quotation_id=q and rfq_line_id=l1 and feasibility_review_id=r1) then raise exception 'SAMPLE_LINE_REVIEW_PIN_MISSING';end if;
+ begin perform public.record_rfq_line_feasibility(c,jsonb_set(payload,'{expected_revision}','3'),'edit-after-quote');raise exception 'SAMPLE_REVIEW_CHANGED_AFTER_QUOTE';exception when others then if sqlerrm<>'RFQ_REVIEW_LOCKED' then raise;end if;end;
+ req:=public.request_material(c,'SAMPLE-REQ',a,10,'pcs','SAMPLE multi-supplier demand',current_date,null,'req');
+ po:=public.create_partial_purchase_order(c,req,s1,'SAMPLE-PO-1',4,1,'INR',current_date,1,'po-one');
+ if public.create_partial_purchase_order(c,req,s1,'SAMPLE-PO-1',4,1,'INR',current_date,1,'po-one')<>po then raise exception 'SAMPLE_PO_RETRY_CHANGED';end if;
+ if not exists(select 1 from public.purchase_requisition_positions where requisition_id=req and allocated_quantity=4 and remaining_quantity=6) then raise exception 'SAMPLE_REQUISITION_BALANCE_WRONG';end if;
+ begin perform public.create_partial_purchase_order(c,req,s2,'SAMPLE-PO-OVER',7,1,'INR',current_date,2,'po-over');raise exception 'SAMPLE_REQUISITION_OVER_ORDERED';exception when others then if sqlerrm<>'REQUISITION_QUANTITY_EXCEEDED' then raise;end if;end;
+ perform public.create_purchase_order(c,req,s2,'SAMPLE-PO-2',1,'INR',current_date,2,'po-remaining');
+ if not exists(select 1 from public.purchase_orders where requisition_id=req and supplier_id=s2 and quantity=6) or not exists(select 1 from public.purchase_requisitions where id=req and status='ordered' and revision=3) then raise exception 'SAMPLE_LEGACY_REMAINING_WRONG';end if;
+end $$;
+rollback;

@@ -1,56 +1,39 @@
-# Testing
+# Automated verification
 
-Explains verification strategy; rules live in `AGENTS.md`.
+Rules live in `AGENTS.md`. All business fixtures are fictional SAMPLE data. No manual UI inspection is needed to decide whether a software test passes.
 
-## Automated checks
-
-| Command | Evidence |
+| Command | Executes |
 |---|---|
-| `pnpm typecheck` | Strict TypeScript and import configuration compile. |
-| `pnpm lint` | ESLint checks application, scripts and tests. |
-| `pnpm test` | Vitest runs repository contract/release tests and focused UI tests. |
-| `pnpm build` | Vite builds `dist` and generates the service worker/manifest. |
+| `pnpm test:factory` | Local Docker stack, pending migrations, safe SAMPLE setup, types, lint, unit/component tests, 15 rollback SQL suites, operations checks, production-build browser journeys, encrypted recovery proof |
+| `pnpm test` | Behavioral units/components plus contract, migration-structure and release checks |
+| `pnpm test:db` | The 15 transaction/permission/concurrency suites listed once in `scripts/database-regressions.mjs`; each rolls back |
+| `pnpm e2e` | Authenticated production-preview journeys; fresh build and static chunk-cycle validation |
+| `pnpm test:devices` | Windows desktop and Android-touch software profiles: scanner Enter, durable record links, label print isolation, offline reload and reconnect |
+| `pnpm test:restore` | Download private objects, encrypt/decrypt/hash-check the portable backup, restore into an owned temporary database, compare 114 tables and physical Storage files, rerun all 15 SQL regressions |
+| `pnpm check:operations --local` | Read-only RLS, bucket, administrator and source-migration checks against the local stack |
+| `pnpm check:operations` | Configured production preflight; missing credentials, recent backup or dated device/factory evidence fail |
+| `pnpm build` | Static PWA assets, PNG/SVG icons, manifest, service worker and Cloudflare headers |
 
-CI runs all four commands on Ubuntu. Unit tests use JSDOM only where a browser DOM is required; repository
-scripts remain Node-environment tests. Command-error unit tests assert that known protected-command failures retain
-their operator meaning while unknown backend details are never rendered.
+Run the full routine gate with Docker available: `pnpm test:factory`. It preserves existing local records and restores the caller's E2E configuration even on failure. It never resets a DB or provisions real accounts. Cold image/browser setup adds time; install Chromium once with `pnpm exec playwright install chromium`.
 
-UX foundation tests cover keyboard search discovery, editable-control exclusions, offline critical-action disabling,
-search-result record navigation and the permitted/unavailable audit-timeline states. Browser E2E opens a generated
-SAMPLE record from global search through its durable record URL before continuing the existing manufacturing flow.
+## Diagnostics and isolation
 
-## Hosted end-to-end suite
+Browser tests use three local workers or two hosted workers, no retries, no skipped tests and no fixed sleeps. Local command timeouts are eight seconds; hosted latency has a separately bounded timeout. JSON results are in `test-results/results.json`, traces and assertion contexts in `test-results/`, and the HTML report in `playwright-report/`. Check logs first. Reports and encrypted backup directories are ignored; credential files are never uploaded.
 
-`pnpm e2e` runs Chromium automatically. Locally it starts or reuses the production preview and can sign in an existing
-disposable `SAMPLE` test user with `E2E_SUPABASE_URL`, `E2E_SUPABASE_PUBLISHABLE_KEY`, `E2E_TEST_EMAIL` and
-`E2E_TEST_PASSWORD` from ignored `.env` / `.env.e2e.local` files. Hosted CI continues to require
-`E2E_BASE_URL`, `E2E_SUPABASE_URL`, `E2E_SUPABASE_SERVICE_ROLE_KEY` and `E2E_TEST_EMAIL`; the service-role key stays
-in the Node test runner and generates the approved test user's magic link. In both modes, the browser carries only an
-authenticated session and drives SAMPLE data through first-company bootstrap, master data, RFQ, feasibility,
-quotation, approval, sales order, receipt, QC release, two competing stock reservations, packing and dispatch. Exactly
-one competing reservation succeeds; the other must receive a structured revision-conflict or insufficient-stock
-failure, proving the server command cannot oversell under concurrent calls.
+CI provisions local Postgres, Auth, gateway, REST and Storage using the pinned CLI. Storage is necessary for real private drawing/certificate uploads and byte recovery. Realtime, analytics, Studio, image proxy and Edge Functions are excluded. CI runs rollback SQL, browser journeys, operations checks and actual restore proof. A weekly Operations recovery workflow repeats the SAMPLE restore drill; its separate nightly live-export job requires explicitly configured production-operations secrets.
 
-The suite intentionally skips when neither credential mode is configured. It must not target a shared or production
-project: bootstrap is correctly one-time, so hosted CI needs a new migrated project or disposable database branch.
-The manual `Hosted E2E` GitHub Actions workflow fails instead of skipping when the same four runner secrets are
-absent, preventing a false-green deployment test.
+The final full factory gate passed on 2026-10-12: 186 tests in 62 files, 15 rollback SQL suites, 20 browser journeys,
+operations checks and encrypted restore, 131.4 seconds. Recovery compared 114 tables and 93 private files/objects.
+The final standalone `pnpm test` passed 187 checks in 62 files after adding the CLI extraction/overwrite guard; lint also passed. Exact evidence is in TASK-0016. Counts reflect the current accumulated SAMPLE fixtures; no skip/retry/manual result is counted as a pass.
 
-## Hosted database integration check
+## Hosted SAMPLE mode
 
-`tests/integration/hosted-manufacturing-path.sql` is a transaction-based companion for an empty hosted test project
-or branch. It generates its SAMPLE test identities per run, creates and approves SAMPLE BOM/routing revisions to prove immutable headers and draft-only children,
-then runs every protected factory command as a simulated authenticated SAMPLE operator. It asserts dispatch, the
-resulting zero lot balance, duplicate reservation and dispatch idempotency, rejected oversell, Order Command Center
-state changes, an authorized caller's global-search result, and denial for an authenticated user without a company
-role, then rolls back. It never leaves users, companies, engineering records, lots or ledger entries behind.
+Use an isolated test project only. Ignored runner variables: `E2E_SUPABASE_URL`, `E2E_SUPABASE_PUBLISHABLE_KEY`, `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD`, `E2E_ALLOW_SAMPLE_WRITES=1`. Optional `E2E_BASE_URL` points to the test deployment. Magic-link mode substitutes runner-only `E2E_SUPABASE_SERVICE_ROLE_KEY` for the password and generates/verifies a link without sending email. The browser receives only the session.
 
-## Manual L1 evidence
+Missing credentials or a visible non-SAMPLE company is an error. Never point these writing journeys at production. Hosted SQL uses `E2E_DATABASE_PROJECT_REF` and runner-only `SUPABASE_ACCESS_TOKEN`; ordinary `test:factory` forces local SQL. All 15 hosted rollback suites and the six most recent hosted browser journeys passed on 2026-10-12 against the approved SAMPLE project.
 
-Before TASK-0001 is `DONE`, record the deployed Cloudflare Pages URL and test results for Windows 11 Chrome
-and Android Chrome: installation, standalone launch, update prompt and offline cached-shell behavior.
+## Acceptance boundaries
 
-## Fixtures and data
+Viewport checks cover 320, 375, 412, 768, 1024 and 1440 CSS pixels. Device profiles add touch, Android user agent, display-mode emulation, actual service-worker offline reload and print media. They do not certify OS installation, scanner optics, Bluetooth/USB compatibility, printer sizing or a factory's SOP. Physical acceptance evidence belongs in the ignored pilot acceptance record, not a fake passing automated test. The production gate rejects pending evidence.
 
-L1 contains no business records. Every later fixture is fictional and labelled `SAMPLE`; no real factory or
-customer data enters automated tests.
+SQL-text assertions are structural guards, not integration proof. Actual rollback transactions verify permissions, exact quantities, invalid transitions, revision checks, idempotency and competing allocations. Restoration checks recoverability, not just archive creation.

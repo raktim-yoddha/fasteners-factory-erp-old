@@ -2,34 +2,19 @@
 
 An authenticated, installable operations ERP for a fastener or precision-component factory. It is a React PWA with Supabase as its complete backend, designed for Windows 11 Chrome and Android Chrome first.
 
-> **Project status:** the L1–L3 vertical slice is implemented with fictional `SAMPLE` data and automated checks. It is not yet approved for a live factory rollout. Real operating procedures, customers, rates, machines, quality plans, and tax documents are deliberately out of scope until factory discovery verifies them.
+> **Project status:** generic non-AI factory workflows through L9 are implemented and automatically tested with fictional SAMPLE data. Live factory rollout still requires actual configuration, device evidence, operations secrets and production restoration acceptance.
 
 ## What it does today
 
-The implemented MVP demonstrates a protected, end-to-end finished-goods order path:
+Commercial RFQ/line feasibility/quote/order; approved engineering and specifications; split supplier POs and partial held
+receipts; signed stock/reservation/count/split/merge events; bounded production/jobs/WIP/output; configured QC/NCR/rework;
+vendor custody; private drawings/certificates; actual lot packages/partial dispatch/customer returns; customer part
+references; measured alternate units; paged reports/history; staff access/audit; validated imports/accounting snapshots;
+equipment calibration/maintenance and explicit shifts/capacity. Shared scanner/Code 39 labels open exact permitted records.
 
-1. Approved user signs in with a passwordless link.
-2. The first administrator creates the first company and plant once.
-3. Users create customer, supplier, item, drawing, warehouse, location, and work-centre records.
-4. Sales creates an RFQ, records feasibility, creates and approves a quotation, and accepts it as a sales order.
-5. Stores receives a held finished-goods lot, Quality releases it, and Stores reserves it against the order.
-6. Dispatch prepares a packing shipment and posts the final dispatch.
-
-The UI also includes a company-scoped dashboard, Order Command Center, and global identifier search. All demo records are explicitly marked `SAMPLE`.
-
-### Deliberate MVP boundaries
-
-| Included | Not included yet |
-| --- | --- |
-| Hosted Supabase Auth, PostgreSQL, RLS, private storage boundary, audit trail | Local/offline Supabase as a production backend |
-| Windows 11 Chrome and Android Chrome installed PWA | iOS, Electron, React Native |
-| Existing finished-goods receipt, QC release, reservation, packing, dispatch | MRP, purchasing, job cards, WIP, full QC/NCR, subcontracting |
-| Passwordless access for administrator-created users | Public sign-up, real customer/factory data |
-| English UI | Other languages |
-| Automated Chromium E2E with fictional data | Camera, barcode scanner, Bluetooth/USB hardware, printer integrations |
-| AI-ready future boundary | AI features; these begin no earlier than L8 |
-
-The planned 16-stage factory backbone is a **DESIGN PROPOSAL**, not a claim about a specific factory’s SOP. See [the product brief](FASTENER_ERP_MASTER_BRIEF.md) and [open discovery questions](docs/open-questions.md).
+No AI, public signup, offline stock queue, machine/PLC control, general ledger/GST filing, payroll or direct Tally sync.
+SAMPLE configuration is not a factory SOP. Hardware baseline is keyboard-wedge input and browser printing; physical
+readability and installed OS behavior remain acceptance work. See [design](docs/design.md) and [manual](docs/user-manual.md).
 
 ## Architecture
 
@@ -57,11 +42,9 @@ flowchart TB
     T[(PostgreSQL business tables)]
     L[(Append-only stock ledger and audit log)]
     ST[Private Storage]
-    RT[Realtime: only when justified]
     X --> V --> T
     V --> L
     T -. approved private files .-> ST
-    T -. selected live updates .-> RT
   end
 
   I -->|1. Load assets and service worker| P
@@ -75,7 +58,7 @@ flowchart TB
   N -->|Online| A
   N -->|Online| R
   N -->|Online only for critical writes| X
-  N -->|Offline: cached reads and labelled local drafts only| C
+  N -->|Offline: cached assets and in-memory reads only| C
 ```
 
 ### How the system behaves
@@ -85,7 +68,7 @@ flowchart TB
 3. **Perform an operation.** Between reads, an operator can create master data, create an RFQ, record feasibility, make or approve a quote, accept a sales order, receive/release/reserve a lot, prepare a shipment, or dispatch it. Each form requests exactly one backend command.
 4. **Server checks before truth changes.** A command validates the caller’s identity and permission, company, object state, expected revision, quantities, and idempotency key in one transaction. It either writes the corresponding business records plus audit/ledger events, or returns a structured reason such as `INSUFFICIENT_AVAILABLE_STOCK`, `LOT_QC_HOLD`, `INVALID_TRANSITION`, or `REVISION_CONFLICT`.
 5. **Refresh after confirmation.** Only a confirmed command invalidates the affected TanStack Query caches; the UI then reads the latest server truth. This avoids optimistic “success” for a failed stock, QC, approval, or dispatch operation.
-6. **If connectivity drops.** The PWA can still show its cached shell and cached read-only screens. Critical writes do not queue invisibly or claim success; they remain clearly labelled local drafts until the user is back online and submits them again.
+6. **If connectivity drops.** The PWA can still show its cached shell and already-loaded in-memory reads. Critical writes do not queue invisibly or claim success; operators must reconnect and resubmit; persistent local drafts and write queues are not implemented.
 
 ### What you can do at each stage
 
@@ -98,12 +81,12 @@ flowchart TB
 | During a failure or retry | Read the returned reason, correct the record, retry safely | Idempotency keys prevent duplicate reservation or dispatch effects. |
 
 - **Frontend:** React, Vite, TypeScript (strict), Tailwind CSS, React Router, TanStack Query.
-- **PWA:** `vite-plugin-pwa` / Workbox. The app shell and cached read screens may work offline; critical writes are online-only and never report success before Supabase confirms them.
-- **Backend:** hosted Supabase only—PostgreSQL migrations, Auth, Row Level Security, RPC commands, private storage, and Realtime only where justified. There is no custom Node backend.
+- **PWA:** `vite-plugin-pwa` / Workbox. The app shell and already-loaded reads may remain visible offline; critical writes are online-only and never report success before Supabase confirms them.
+- **Backend:** hosted Supabase only—PostgreSQL migrations, Auth, Row Level Security, RPC commands, private drawing/certificate Storage; no deployed Realtime or Edge Functions. There is no custom Node backend.
 - **State:** server state stays in TanStack Query. Zustand is reserved for future truly global local UI state.
 - **Data correctness:** money and measurements are stored as `NUMERIC`; stock is an append-only ledger; state changes run in server-side commands with authorization, revision, quantity, and idempotency checks.
 
-More detail: [architecture](docs/architecture.md), [domain model](docs/domain-model.md), [security](docs/security.md), and [ADRs](adr/).
+More detail: [interaction design](docs/design.md), [implemented workflows](docs/workflows.md), [audit](docs/project-audit.md), [architecture](docs/architecture.md), [domain model](docs/domain-model.md), [security](docs/security.md), and [ADRs](adr/).
 
 ## Security and data rules
 
@@ -219,10 +202,10 @@ Do not place a service-role key, database password, SMTP credential, or test pas
 | L5 | Manufacturing execution, work orders, job cards, WIP |
 | L6 | Quality, NCR/rework, subcontracting, certificates |
 | L7 | Dispatch hardening, traceability, operational reporting |
-| L8 | Optional, backend-gated AI suggestions only |
+| L8 | Private documents, validated imports and approved accounting exports |
 | L9 | Evidence-driven extensions such as scheduling and integrations |
 
-Read the [roadmap](docs/roadmap.md), [task board](docs/tasks/TASKS.md), and [open questions](docs/open-questions.md) before treating future capabilities as committed scope.
+Generic software milestones are delivered; installed factory acceptance is still open. See the [roadmap](docs/roadmap.md), [task board](docs/tasks/TASKS.md) and [open questions](docs/open-questions.md).
 
 ## Contributor rules
 
@@ -248,3 +231,16 @@ Read the [roadmap](docs/roadmap.md), [task board](docs/tasks/TASKS.md), and [ope
 - [Open questions](docs/open-questions.md)
 - [Task board](docs/tasks/TASKS.md)
 - [Architecture decisions](adr/)
+
+
+## Automatic factory and operations gate
+
+With Docker available, run `pnpm test:factory`: pending local migrations, safe SAMPLE seed, types/lint/units, 15 rollback
+SQL suites, operations checks, all production-preview browser journeys and encrypted restore proof. No manual UI
+checking or production credential is needed. Failures leave JSON/assertion/trace reports. `pnpm test:devices` focuses
+Windows desktop/Android-touch scanner, record reload, isolated printing and offline recovery.
+
+`pnpm backup:create` prepares an encrypted DB-plus-private-files archive with explicit limits. Configured live exports
+run nightly with 30-day encrypted artifact retention; weekly CI drills recovery on SAMPLE. `pnpm backup:verify --file
+backups/<archive>.fferp` authenticates it. `pnpm check:operations` is a read-only production gate, which fails on missing
+live setup or dated factory/device/restore evidence. Full variables, key custody and activation: [deployment](docs/deployment.md).

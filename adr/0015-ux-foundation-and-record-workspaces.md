@@ -35,3 +35,17 @@ actions remain separate decisions.
 The shell disables every operational command control while offline, not only stock and dispatch. Critical stock and
 dispatch panels retain their local explanation because they contain server-confirmed inventory and shipment commands.
 Navigation, sign-out, company selection and read-only record context remain usable.
+
+
+## Amendment (2026-10-12): Exact scanning, recoverable history and labels
+
+Keyboard-wedge input/paste plus Enter resolves exact permitted item/lot/work/job/shipment/package identifiers via
+SECURITY INVOKER lookup. Ambiguity requires operator choice; lookup never performs a business command. Code 39 SVG
+labels reuse recorded identifiers and show text fallback for unsupported values rather than silently altering codes.
+Lot/package print portals isolate identity/confirmed contents from the workspace; current stock/QC is checked by lookup.
+
+Related links now use a single permission-preserving SECURITY INVOKER keyset RPC instead of client fan-out or truncated
+intermediate ID lists. Timeline and stock ledger use keyset pages; bigint event IDs remain text. Record/company changes
+reset paging state. Private evidence is reachable through its owning module. Deferred workspaces reuse loading recovery;
+Vite default chunks and an automatic static-import graph check replace custom grouping that caused a runtime cycle.
+Offline company-read startup no longer blocks the installed shell. Backend responses stay uncached and writes online-only.

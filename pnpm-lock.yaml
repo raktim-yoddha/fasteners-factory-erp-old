@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@sqlite.org/sqlite-wasm':
+        specifier: 3.53.4-build2
+        version: 3.53.4-build2
       '@supabase/supabase-js':
         specifier: 2.117.3
         version: 2.117.3
@@ -1081,6 +1084,10 @@ packages:
     resolution: {integrity: sha512-JY1rQdWOJrKutORqKO1uzrHXV86jFiQzfLFKx2s8S1CjLXL9fC5LOIvk0q7Z7PXJvsByt+sdoE1Q2a9gBr4gLQ==}
     cpu: [x64]
     os: [win32]
+
+  '@sqlite.org/sqlite-wasm@3.53.4-build2':
+    resolution: {integrity: sha512-kQVArGJA4z7s56Dm8t+eTBXad4LiohuVj9pfgDNOcxa+Ic5xMrWlLPTq6cT0hw5S4MIvtpsraW+B0wD+IPvC7A==}
+    engines: {node: '>=22'}
 
   '@supabase/auth-js@2.117.3':
     resolution: {integrity: sha512-XOZV+jllcU2Hzij8SwgM78zl0lOEr6BTjzi2MYkBb39nOAQzb5AelGpMUvVj7lwGSB11JmpAs/FEQroAyFzWEA==}
@@ -4014,6 +4021,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.64.2':
     optional: true
+
+  '@sqlite.org/sqlite-wasm@3.53.4-build2': {}
 
   '@supabase/auth-js@2.117.3':
     dependencies:

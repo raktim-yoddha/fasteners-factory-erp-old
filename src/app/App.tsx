@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { AppShell } from '@/app/AppShell'
+import { workspaceMode } from '@/local/mode'
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, refetchOnWindowFocus: false }
+    queries: { retry: 1, refetchOnWindowFocus: false, networkMode: workspaceMode() === 'solo' ? 'always' : 'online' },
+    mutations: { networkMode: workspaceMode() === 'solo' ? 'always' : 'online' },
   }
 })
 

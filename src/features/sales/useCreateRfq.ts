@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
+import { positiveDecimalSchema } from '@/lib/decimal'
 
 const createRfqSchema = z.object({
   companyId: z.uuid(),
@@ -10,9 +11,21 @@ const createRfqSchema = z.object({
   idempotencyKey: z.string().trim().min(1).max(160),
   line: z.object({
     requestedDescription: z.string().trim().min(1).max(500),
-    quantity: z.coerce.number().positive(),
-    uom: z.enum(['pcs', 'kg', 'm', 'set'])
-  })
+    quantity: positiveDecimalSchema,
+    uom: z.enum(['pcs', 'kg', 'm', 'set']),
+    requiredBy: z.string().date().nullable().optional(),
+  }),
+  additionalLines: z
+    .array(
+      z.object({
+        requestedDescription: z.string().trim().min(1).max(500),
+        quantity: positiveDecimalSchema,
+        uom: z.enum(['pcs', 'kg', 'm', 'set']),
+        requiredBy: z.string().date().nullable().optional(),
+      }),
+    )
+    .max(99)
+    .optional(),
 })
 
 export type CreateRfqInput = z.input<typeof createRfqSchema>
@@ -29,14 +42,16 @@ export function useCreateRfq() {
         p_rfq_number: request.rfqNumber,
         p_customer_id: request.customerId,
         p_requirement_summary: request.requirementSummary,
-        p_lines: [{
-          item_id: null,
-          requested_description: request.line.requestedDescription,
-          quantity: request.line.quantity,
-          uom: request.line.uom,
-          required_by: null
-        }],
-        p_idempotency_key: request.idempotencyKey
+        p_lines: [...(request.additionalLines ?? []), request.line].map(
+          (line) => ({
+            item_id: null,
+            requested_description: line.requestedDescription,
+            quantity: line.quantity,
+            uom: line.uom,
+            required_by: line.requiredBy ?? null,
+          }),
+        ),
+        p_idempotency_key: request.idempotencyKey,
       })
       if (error) throw error
       return data
@@ -45,8 +60,8 @@ export function useCreateRfq() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['commercial-records'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] }),
-        queryClient.invalidateQueries({ queryKey: ['order-command-center'] })
+        queryClient.invalidateQueries({ queryKey: ['order-command-center'] }),
       ])
-    }
+    },
   })
 }

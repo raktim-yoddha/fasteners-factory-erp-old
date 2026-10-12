@@ -7,6 +7,11 @@
 > **Target delivery:** Internal, authenticated, installable Progressive Web App (PWA) for desktop, mobile and tablet.  
 > **Core stack decision:** **React + Vite + TypeScript, not Next.js**, with Supabase as the backend.  
 > **Decision status:** Architecture is a recommendation; specific factory practices are **not verified** until discovery.
+>
+> **Historical proposal:** The startup prompt and documentation matrix below are retained as design history.
+> `AGENTS.md` is the sole current engineering contract, with an identical `CLAUDE.md`; use `adr/`, not
+> `docs/decisions.md`. Current implemented scope is explained in `docs/product.md`, `docs/design.md` and
+> `docs/architecture.md`. Proposed offline drafts, hardware and factory SOP are not implemented facts.
 
 ---
 
@@ -20,7 +25,7 @@ You are the lead architect and implementation agent for Fastener Factory OS, an 
 Your first and canonical source of product intent is FASTENER_ERP_MASTER_BRIEF.md. Read it completely before coding. Treat business workflows in this document as design candidates until confirmed by factory discovery; never claim that unverified steps are real company SOPs.
 
 THE GOAL:
-Deliver an end-to-end, modular, audit-ready, installable PWA covering sales enquiry through manufacturing, inventory, quality, packing and dispatch. Design the core so that future Electron and React Native clients can consume the same backend APIs, but DO NOT build Electron or React Native now. Integrate AI-ready seams from day one, but make all core factory workflows function with AI switched off.
+Deliver an end-to-end, modular, audit-ready, installable PWA covering sales enquiry through manufacturing, inventory, quality, packing and dispatch. Design the core so that future Electron and React Native clients can consume the same backend APIs, but DO NOT build Electron or React Native now. This is a non-AI product; all workflows use configured rules and authorized server commands.
 
 DECIDED STACK:
 - React + Vite + TypeScript (strict mode); do not introduce Next.js.
@@ -30,14 +35,12 @@ DECIDED STACK:
 - Supabase PostgreSQL, Auth, RLS, Storage, Realtime where justified, SQL migrations and Edge Functions.
 - PostgreSQL transactional functions (RPC) or equivalent trusted server-side transactional commands for critical inventory, production, QC and dispatch transitions.
 - Zod at client and server ingress boundaries; database constraints for final enforcement.
-- AI Gateway on the backend with provider adapters, feature flags, quotas, audit trails, human approval and structured outputs. Never call AI vendors directly from the PWA using secret keys.
 - Background task queue for durable asynchronous work; use Supabase Queues/Cron initially where they fit and idempotent workers for processing. Verify current Supabase docs before implementation.
 - Do not add a heavyweight Node.js backend unless concrete requirements exceed the Supabase capabilities; document the architectural decision first.
 
 MANDATORY DOCUMENTATION CONTRACT:
 1. Create AGENTS.md in the repository root as the canonical instruction document for every coding agent. It must contain the operating rules below and links to current docs.
 2. Create CLAUDE.md in the repository root with `Read AGENTS.md first; AGENTS.md is canonical.` Add Claude-specific instructions only if genuinely required; avoid duplicating conflicting rules. If another tool uses a different agent instruction filename, make it link to AGENTS.md.
-3. Maintain docs/architecture.md, docs/style.md, docs/product.md, docs/domain-model.md, docs/workflows.md, docs/ai.md, docs/security.md, docs/testing.md, docs/decisions.md and docs/tasks/README.md. Use short subdocuments for complex domains when helpful.
 4. Maintain docs/tasks/TASKS.md as the human-readable task board. Create focused task specs in docs/tasks/TASK-####-slug.md. Every task has goal, scope, dependencies, risks, acceptance criteria, tests, owner/agent, status, and changed files.
 5. For each meaningful feature or migration: read relevant documentation and current code → update/create task → note acceptance criteria → implement → test → update docs and diagrams → mark task done. NEVER mark a task complete without reporting validation evidence.
 6. Keep docs/architecture.md in sync with actual modules, schemas, data flow, trust boundaries, runtime deployments and major decisions. Architecture diagrams may use Mermaid.
@@ -53,8 +56,6 @@ WORK EXECUTION RULES:
 - Define module-owned commands and data contracts. Never let components directly perform arbitrary multi-table writes for core business transitions.
 - Enforce authorization in the backend and database, not only by hiding buttons.
 - Use explicit transaction boundaries and concurrency tests for reservation, issue, receipt, rework, lot release and dispatch; reject negative stock unless explicitly authorized as an audited exception.
-- Treat every AI response as untrusted suggestion. AI never directly posts stock moves, approves QC, commits quotations, or dispatches goods.
-- Support AI_ENABLED=false and per-feature flags. Prove that all core workflows still operate with AI off.
 - Sensitive documents must be tenant/company scoped. Use RLS, least-privilege grants, protected storage buckets, safe token handling, structured logs without secrets and an append-only audit trail.
 - Do not claim offline transactions are committed until the server confirms them. For the prototype, offline supports app shell/read-only cached screens and explicit drafts; stock and QC changes require connectivity.
 - Design for scanner/touch workflows: few taps, large hit targets, clear confirmation, error recovery, barcode/QR entry, predictable statuses.
@@ -65,7 +66,6 @@ WORK EXECUTION RULES:
 
 STARTUP PROCEDURE:
 1. Read this file fully. Summarize confirmed requirements, proposed assumptions and unresolved discovery questions.
-2. Initialize documentation: AGENTS.md, CLAUDE.md, docs/architecture.md, docs/style.md, docs/domain-model.md, docs/workflows.md, docs/ai.md, docs/security.md, docs/tasks/TASKS.md and docs/decisions.md.
 3. Generate the implementation roadmap as milestones and granular tasks. Build one vertical slice at a time.
 4. Start with repository tooling, auth/RBAC/RLS, organization settings, core master data and the order thread. Then connect one end-to-end happy path using sample data before deepening modules.
 5. Present the next smallest task with acceptance criteria and test evidence. Only implement code when asked to proceed or when the user explicitly delegates implementation.
@@ -79,7 +79,7 @@ This is a manufacturing operations application, not a marketing website. Favor o
 
 ## B1. Product definition
 
-**Working name:** Fastener Factory OS (placeholder; not a verified brand name). A private, internal ERP for small-to-mid-sized fastener and precision-component manufacturers. It digitizes the complete order thread from sales contact to dispatch with configurable manufacturing routes, inventory and traceability, and optional AI assistance.
+**Working name:** Fastener Factory OS (placeholder; not a verified brand name). A private, internal ERP for small-to-mid-sized fastener and precision-component manufacturers. It digitizes the complete order thread from sales contact to dispatch with configurable manufacturing routes, inventory and traceability, and deterministic workflow controls.
 
 **Success means a manager can answer, from actual records:**
 - What did the customer ask for, and which approved quotation/PO/drawing revision controls this job?
@@ -112,9 +112,9 @@ Research/implementation references (verify current versions before coding):
 
 ## B3. Scope
 
-**Prototype in scope:** Internal authentication, roles, customer/supplier/item master, drawing revisions, RFQs, feasibility, cost sheets, quotes, PO checks, sales orders, planning, BOM and routing, material ledger/reservations, purchasing/GRN, QC, work orders/job cards, WIP, subcontract tracking, assembly when needed, FG release, packing, dispatch, audit, dashboards, sample AI modules, installable PWA for all target devices.
+**Prototype in scope:** Internal authentication, roles, customer/supplier/item master, drawing revisions, RFQs, feasibility, cost sheets, quotes, PO checks, sales orders, planning, BOM and routing, material ledger/reservations, purchasing/GRN, QC, work orders/job cards, WIP, subcontract tracking, assembly when needed, FG release, packing, dispatch, audit, dashboards, installable PWA for all target devices.
 
-**Prototype out of scope unless newly approved:** Native Electron app, React Native app, full public ecommerce/SEO site, direct machine/PLC control, unvalidated vision-based accept/reject, production accounting/tax filing, autonomously placing orders or changing inventory through AI, unrestricted offline inventory mutations, multi-company conglomerate complexity, full HR/payroll.
+**Prototype out of scope unless newly approved:** Native Electron app, React Native app, full public ecommerce/SEO site, direct machine/PLC control, unvalidated vision-based accept/reject, production accounting/tax filing, autonomously placing orders or changing inventory, unrestricted offline inventory mutations, multi-company conglomerate complexity, full HR/payroll.
 
 **Adjacent extension modules:** Sales forecasting, accounting/AR/AP, quotation follow-ups, credit controls, customer complaints and returns, calibration, toolroom, preventive maintenance, production costing, document management, approvals, exports, certificates/PPAP, vendor scorecards, machine telemetry, OEE, energy use, external customer/vendor portals. Their exact phase is to be determined.
 
@@ -124,8 +124,7 @@ Research/implementation references (verify current versions before coding):
 2. **Routing rather than a rigid conveyor belt.** Each SKU revision/order chooses its route and required operations.
 3. **Everything is traceable.** People, timestamps, quantities, units, revisions, lots, approvals and reasons.
 4. **Workflow exceptions are first-class.** Holds, shortages, split lots, partial shipments, scrap, rework, corrections and cancellations.
-5. **Deterministic operational truth.** Ledger/constraints/transactions—not AI—determine commitments and stock balances.
-6. **AI optional, architecture ready.** AI providers can be replaced without changing core transactions.
+5. **Deterministic operational truth.** Ledger/constraints/transactions determine commitments and stock balances.
 7. **Installed app experience on all devices.** No separate mobile website experience is designed; installation is the intended flow.
 8. **Prototype does not claim regulatory compliance or operational suitability until validated.**
 
@@ -196,8 +195,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** customer/contact, source, requested product or specification, quantity + unit, due date, destination, drawing reference/revision, grade, finish, packaging, enquiry attachments, terms, owner and next action.  
 **Substeps:** log interaction → normalize requirements → identify existing item/customer → collect missing details → attach drawings/samples → classify (standard/repeat/new development) → request technical review or quote.  
 **States/tags:** `NEW`, `AWAITING_INFO`, `REVIEW_REQUIRED`, `QUALIFIED`, `LOST`, `DUPLICATE`; `URGENT`, `EXPORT`, `CUSTOM_DRAWING`.  
-**Without AI:** form, templates, follow-up SLA, duplicate candidates, customer history and item lookup.  
-**With AI:** extract RFQ fields from text/PDF/spreadsheets; surface missing information and similar history; *human confirms extracted values*.  
+**Workflow:** form, templates, follow-up SLA, duplicate candidates, customer history and item lookup.
 **Exceptions:** incomplete specification, conflicting attachments, customer identity ambiguity, revised RFQ and duplicate enquiry.  
 **Exit:** approved requirements snapshot and RFQ version.
 
@@ -206,8 +204,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** drawing/part revision, material/grade, standards, dimensions/tolerances, processes, route, required gauges/tooling, capacity estimates, inspection plan, trial/sample approval if required.  
 **Substeps:** version drawing → compare item candidates → classify make/buy/subcontract → select/propose BOM and routing → check capability/tooling/gauges → identify critical features → decide feasibility and conditions.  
 **States:** `ENGINEERING_PENDING`, `UNDER_REVIEW`, `INFO_REQUIRED`, `FEASIBLE`, `CONDITIONAL`, `NOT_FEASIBLE`.  
-**Without AI:** engineer workflow, revision-controlled specifications, approved routings/templates.  
-**With AI:** drawing metadata extraction and revision comparison; retrieval of similar parts; risk checklist draft—**no automatic feasibility approval**.  
+**Workflow:** engineer workflow, revision-controlled specifications, approved routings/templates.
 **Exceptions:** different drawing revisions, obsolete parts, tool development required, unapproved customer deviation.  
 **Exit:** signed feasibility review or documented rejection.
 
@@ -216,8 +213,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** material usage and yield, current/material vendor prices, route operations and run times, setup, labor/work-centre rates, tooling amortization, scrap assumption, subcontract charges, freight/packing, overhead, tax/terms placeholders, margin and revision.  
 **Substeps:** calculate BOM → estimate yields → add operations/tooling/subcontracting → apply rate/version → check MOQ and price approval → build quote → send and follow up → version negotiation.  
 **States:** `COSTING`, `NEEDS_RATE`, `APPROVAL_REQUIRED`, `APPROVED`, `SENT`, `REVISION_REQUESTED`, `WON`, `LOST`, `EXPIRED`.  
-**Without AI:** formula engine and margin thresholds, comparable quote records, PDF generation.  
-**With AI:** draft explanatory quote notes, highlight unusual cost assumptions and historical comparable jobs; do not delegate arithmetic or margin checks to LLM.  
+**Workflow:** formula engine and margin thresholds, comparable quote records, PDF generation.
 **Exceptions:** price validity, material rate change, quantity breaks, revised drawing, rejected margin.  
 **Exit:** revision-controlled approved quotation.
 
@@ -226,8 +222,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** customer PO, accepted quote, product/drawing revision, schedule lines, price and UOM, delivery location, customer-specific requirements, packing, terms/credit/approvals.  
 **Substeps:** import PO → compare PO and quote line by line → resolve mismatches → credit/contract check → confirm dates → snapshot specifications → create Sales Order + delivery lines.  
 **States:** `PO_RECEIVED`, `MATCHING`, `DISCREPANCY`, `ON_HOLD`, `APPROVED`, `ORDERED`, `CANCELLED`.  
-**Without AI:** manual entry, rule-based comparison and approval.  
-**With AI:** PO PDF extraction and structured mismatch proposal; operator signs off differences.  
+**Workflow:** manual entry, rule-based comparison and approval.
 **Exceptions:** customer price differs, earlier delivery requested, changed revision, duplicate PO, partial amendment.  
 **Exit:** released/approved Sales Order.
 
@@ -236,8 +231,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** SO demand and due dates, on-hand/projection, WIP, routing version, capacity calendars, machine/work-centre, shift, setup times, batch policy, material lead times, vendor turnaround and order priority.  
 **Substeps:** demand explosion → stock/FG netting → decide stock issue vs production → BOM explosion / MRP → capacity check → group/split lots → create job routes and WO → schedule operations → release when gates pass.  
 **States:** `UNPLANNED`, `MRP_PENDING`, `CAPACITY_CONFLICT`, `TENTATIVE`, `PLANNED`, `RELEASED`, `REPLAN_REQUIRED`.  
-**Without AI:** deterministic MRP and finite-capacity constraints/rules/optimization.  
-**With AI:** estimated run/late risk, sequencing alternatives, explainability of bottlenecks—not authoritative commitment.  
+**Workflow:** deterministic MRP and finite-capacity constraints/rules/optimization.
 **Exceptions:** machine breakdown, alternate resource, partial FG stock, expedited order, missing capacity.  
 **Exit:** versioned production plan, reserved demand and releasable work orders.
 
@@ -246,8 +240,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** item variants; UOMs and conversion factors (pcs, kg, bundles, boxes); warehouses/zones/bins; inventory lots/heats; source certificates; physical/available/reserved/QC-hold/WIP/vendor balances; PO and GRN; BOM issue policy; kitting.  
 **Substeps:** gross requirement → on-hand by location/lot → subtract holds/reservations → expected inbound check → shortage planning → requisition → supplier PO → follow-up → arrival/count/weigh → GRN → incoming QC → lot/batch certification → put-away → reserve/pick → kit → issue to WO → machine staging → unused return/scrap reconciliation.  
 **States:** `NOT_CHECKED`, `SHORT`, `ON_ORDER`, `RECEIVED_QC`, `AVAILABLE`, `RESERVED`, `PICKED`, `KIT_READY`, `ISSUED`; flags `LOT_BLOCKED`, `EXPIRY/CERT_HOLD`, `UOM_MISMATCH`.  
-**Without AI:** ledger, allocation rules, procurement and QR scans; all stock math is deterministic.  
-**With AI:** supplier-lateness prediction, demand forecast, abnormal consumption and suggested alternative vendors after validated history.  
+**Workflow:** ledger, allocation rules, procurement and QR scans; all stock math is deterministic.
 **Exceptions:** substitute materials requiring approval, rejected GRN, backflush discrepancies, excess issue, multi-lot kit, partial reservation, ownership/customer-owned material.  
 **Exit:** verified material release for the operation/job; record all partials and shortages.
 
@@ -256,8 +249,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** work centre, machine, operator qualification where applicable, die/tool/fixture/gauge, calibration, availability, maintenance block, tool life/counter, setup checklist, recipe/setup sheet.  
 **Substeps:** reserve machine/time → confirm tooling/gauges → check calibration/maintenance → stage equipment → setup → trial/first-piece QC gate if applicable → release.  
 **States:** `UNASSIGNED`, `TOOL_MISSING`, `MAINTENANCE_HOLD`, `SETUP`, `FIRST_PIECE_QC`, `READY`.  
-**Without AI:** asset master, counters, setup checklists, due-date blocks.  
-**With AI:** tool wear/maintenance predictions after data is available.  
+**Workflow:** asset master, counters, setup checklists, due-date blocks.
 **Exceptions:** lost/broken gauge, expired calibration, unscheduled breakdown, different tool revision.  
 **Exit:** signed readiness gate.
 
@@ -266,8 +258,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** WO, job card, operation, work centre, scheduled and actual time, operator, lot, material issued/consumed, machine count, good/reject/rework qty, reason/downtime, setup changes, QC requests.  
 **Substeps:** operation queue → setup → start → input lot/material checks → process work → capture output/defects/time → in-process check → complete partial/full → close/transfer WIP.  
 **States:** `QUEUED`, `SETUP`, `RUNNING`, `PAUSED`, `BREAKDOWN`, `QC_WAIT`, `PARTIAL`, `COMPLETE`, `ABORTED`.  
-**Without AI:** shop-floor touch UI, event timestamps, barcode scans, controlled quantity entries.  
-**With AI:** explain delays from data, anomaly/risk alerts, natural-language shift summary.  
+**Workflow:** shop-floor touch UI, event timestamps, barcode scans, controlled quantity entries.
 **Exceptions:** split job, material short issue, rework loop, scrap, operation skip by authorized deviation, shift handoff.  
 **Exit:** validated operation output with full custody/quantity records.
 
@@ -276,8 +267,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** current holder/location, parent/child lots, from/to stages, transfer number, work-centre move, accepted/rejected/rework quantities, handler, time.  
 **Substeps:** propose move → confirm lot and available quantity → authorize source → scan destination → receive/acknowledge → reconcile quantity and custody.  
 **States:** `AT_STATION`, `IN_TRANSFER`, `AT_QC`, `AT_VENDOR`, `ON_HOLD`, `RECONCILIATION_REQUIRED`.  
-**Without AI:** movement ledger and scans.  
-**With AI:** movement-delay alerts, discrepancy clustering.  
+**Workflow:** movement ledger and scans.
 **Exceptions:** misplaced lot, partial receipt, serial/lot split, loss/damage, double scan.  
 **Exit:** immutable movement transaction and current location projection.
 
@@ -286,8 +276,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** inspection stage, plan/version, sample size/rule, spec limits, measurements with units and instruments, images/certificates, lot/operation, inspector, acceptance evidence, NCR/CAPA and disposition.  
 **Substeps:** incoming → first-piece → in-process → post-subcontract → final → pre-dispatch when applicable; run checks; accept/hold/fail; NCR → investigation → sort/rework/scrap/concession with approvals → re-inspection.  
 **States:** `INSPECTION_DUE`, `IN_PROGRESS`, `PASS`, `HOLD`, `FAIL`, `NCR_OPEN`, `REWORK`, `CONCESSION_PENDING`, `RELEASED`.  
-**Without AI:** criteria rules with controlled precision/tolerances, audit and release permissions.  
-**With AI:** summarize NCRs, similar-defect retrieval, draft CAPA hypotheses; image QC requires separately validated model/lighting/camera study.  
+**Workflow:** criteria rules with controlled precision/tolerances, audit and release permissions.
 **Exceptions:** out-of-tolerance measurements, invalid gauge, sample failure, concession approval, supplier certificate mismatch, QC lot hold.  
 **Exit:** signed approved disposition; rejected material cannot silently enter available FG.
 
@@ -296,8 +285,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** subcontractor, work order, operation, owner of raw/WIP materials, dispatch challan, sent/acknowledged/returned/lost quantities, turnaround promise, processing charges and certificate, inspection.  
 **Substeps:** select approved vendor → issue subcontract order → reserve/transfer WIP → gate-out to vendor → acknowledge → receive progress/ETA → return → count/weigh reconciliation → QC → post charges → continue route.  
 **States:** `REQUESTED`, `AWAITING_SEND`, `SENT`, `AT_VENDOR`, `LATE`, `PARTIAL_RETURN`, `RETURNED`, `QC_HOLD`, `CLOSED`.  
-**Without AI:** vendor custody stock, expected dates, alerts and reconciliation.  
-**With AI:** vendor delay forecast, outsourced throughput analysis, messages drafted from actual events.  
+**Workflow:** vendor custody stock, expected dates, alerts and reconciliation.
 **Exceptions:** partial return, shortage/loss, mixed lots, late job, defective coating/processing, rejected invoice.  
 **Exit:** accepted outsourced output or controlled discrepancy resolution.
 
@@ -307,8 +295,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** parent/child items, assembly BOM, component lots, kit issue, torque/test or other required steps where appropriate, output lots.  
 **Substeps:** check components → reserve → kit → issue → assemble or secondary-machine operation → inspect → output transfer.  
 **States:** `NOT_APPLICABLE`, `AWAITING_KIT`, `RUNNING`, `TEST_REQUIRED`, `COMPLETE`, `HOLD`.  
-**Without AI:** assembly BOM, backflush/manual issue, operation sequence and inspection.  
-**With AI:** defect pattern explanations if sufficient data.  
+**Workflow:** assembly BOM, backflush/manual issue, operation sequence and inspection.
 **Exceptions:** missing component, substitute part, incomplete assembly, rejected output.  
 **Exit:** approved semi-finished/finished item and component genealogy.
 
@@ -317,8 +304,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** completed output and disposition, all required QC and processing certificates, closed/open NCRs, FG lot ID, bin and released quantity.  
 **Substeps:** reconcile operations → ensure routing gates satisfied → verify quantity by lot → verify certificates/QC → release approved quantity → transfer to FG location → allocate to SO.  
 **States:** `PENDING_RECONCILIATION`, `QC_HOLD`, `RELEASE_PENDING`, `FG_RELEASED`, `FG_BLOCKED`.  
-**Without AI:** transaction checklist and server-side release gate.  
-**With AI:** explain unresolved blockers without releasing goods.  
+**Workflow:** transaction checklist and server-side release gate.
 **Exceptions:** partial-release, disputed WIP, missing certificate, blocked lot, traceability gap.  
 **Exit:** sellable FG lot with parent genealogy and audit.
 
@@ -327,8 +313,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** order/lot allocation, pack specification/version, units per carton/bag, net/gross weight, label template, box sequence, packaging material, scanner verification.  
 **Substeps:** pick FG → scan correct lot/customer/order → choose pack instruction → count/weigh → pack → label → validate quantity → generate packing list → stage shipment.  
 **States:** `WAITING`, `PICKED`, `PACKING`, `PARTIAL`, `PACKED`, `VERIFIED`, `HOLD`.  
-**Without AI:** barcodes, printing, validations and reconciliation.  
-**With AI:** generally unnecessary; exception explanations only.  
+**Workflow:** barcodes, printing, validations and reconciliation.
 **Exceptions:** packing shortage, overpack, mixed lot prohibited, wrong label, damaged carton.  
 **Exit:** identified package IDs linked to lots/order lines.
 
@@ -337,8 +322,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** eligible packed goods, promised delivery, ship-to, carrier, serviceability, weight/volume, documents, vehicle/gate appointment, delivery groups.  
 **Substeps:** gather ready order lines → split/consolidate shipments → choose carrier/route → allocate cartons → prepare docs → approve dispatch → set loading schedule.  
 **States:** `NOT_READY`, `PARTIAL_READY`, `DOC_HOLD`, `CARRIER_PENDING`, `READY_TO_LOAD`, `READY_TO_DISPATCH`.  
-**Without AI:** scheduling/route optimization where useful; packing and invoice references.  
-**With AI:** estimated delay risk, consolidation suggestions, communications.  
+**Workflow:** scheduling/route optimization where useful; packing and invoice references.
 **Exceptions:** partial dispatch, carrier cancellation, customer hold, document mismatch.  
 **Exit:** approved shipment with confirmed source cartons and transport details.
 
@@ -347,8 +331,7 @@ This is a business navigation hierarchy, **not a rule that every order completes
 **Data:** shipment ID, sales-order lines, cartons/weight/count, lot genealogy, gate-out event, vehicle/driver/carrier, invoice/e-way documents if applicable, acknowledgement/PoD later.  
 **Substeps:** verify loading → scan packages → reconcile dispatch quantity → finalize docs → supervisor/gate approval → gate-out → customer notification → subsequent delivery/PoD and close.  
 **States:** `LOADING`, `COUNT_MISMATCH`, `GATE_APPROVAL`, `DISPATCHED`, `IN_TRANSIT`, `DELIVERED`, `CLOSED`, `DELIVERY_EXCEPTION`.  
-**Without AI:** transactional gate-out, audit and shipment tracking.  
-**With AI:** summarize exceptions/compose customer updates; never autonomously gate out.  
+**Workflow:** transactional gate-out, audit and shipment tracking.
 **Exceptions:** short-loaded carton, wrong vehicle, partial ship, missing mandatory documents, return to warehouse, delivery refusal.  
 **Exit:** immutable dispatch event with confirmed quantity, packaging IDs and corresponding lot record.
 
@@ -383,7 +366,6 @@ flowchart LR
     B --> H[Sheet cutting / stamping]
     H --> I[Bending / secondary ops as required]
     E --> J[Quality gate]
-    G --> J
     I --> J
     J --> K[FG / packing / dispatch]
 ```
@@ -418,7 +400,6 @@ Finished Goods: FG Lots, Allocations
 Packing & Dispatch: Packs, Shipments, Gate-out, Delivery
 Reports: Orders, OTIF, WIP, Scrap, Yield, Inventory Aging, Vendor KPIs
 Documents / Audit
-AI Assistant (flagged, optional)
 Settings: Users, Roles, Plants, Numbering, Units, Approvals, Flags
 ```
 
@@ -440,7 +421,7 @@ Shows customer and sales terms; line products; all source documents/revisions; a
 
 ## F4. Search
 
-Global search by SO, PO, RFQ, item code, specification, drawing revision, work order, lot/heat, GRN, supplier, customer, carton, shipment and scanned code. Permissions filter results. Hybrid full-text/fuzzy search first; vector similarity is optional and **never** a substitute for exact lot/reference lookup.
+Global search by SO, PO, RFQ, item code, specification, drawing revision, work order, lot/heat, GRN, supplier, customer, carton, shipment and scanned code. Permissions filter results. Hybrid full-text/fuzzy search first; no approximate lookup substitutes for exact lot/reference lookup.
 
 ---
 
@@ -459,7 +440,7 @@ Global search by SO, PO, RFQ, item code, specification, drawing revision, work o
 | Validation | Zod + SQL constraints | types at boundaries, schema at commit |
 | Backend | Supabase | managed PostgreSQL, Auth, Storage, Realtime, Functions |
 | Critical writes | PostgreSQL transactions/RPC via restricted command APIs | atomicity and concurrency, authoritative logic |
-| Secrets/webhooks/AI | Supabase Edge Functions | server trust boundary; protected providers |
+| Secrets/webhooks | Supabase Edge Functions | trusted integrations when needed |
 | Background | Supabase Queues/Cron initially | durable retries, idempotent work |
 | Reports | SQL materialized/normal views and aggregates | verifiable arithmetic |
 | Telemetry | structured errors/audit and basic traces | diagnosis without overbuilding |
@@ -479,13 +460,6 @@ flowchart TB
     P --> FS[Supabase Storage\nProtected buckets]
     C --> EV[Outbox / durable Queue]
     EV --> W[Background handlers]
-    P --> AIUI[AI Suggestions UI]
-    AIUI --> G[Secured AI Gateway / Edge Function]
-    G --> DB
-    G --> FS
-    G --> V[AI provider adapter]
-    G --> LOG[AI run + approval audit]
-    W --> LOG
 ```
 
 **Command boundary:** ordinary authorized list/detail reads may query scoped Supabase APIs. Write commands that span entities or affect material, approvals, QC or shipment state must run as one validated server/database operation; validate role, transition, quantities, revisions and concurrency in that boundary.
@@ -505,7 +479,6 @@ Names are an initial logical sketch, **not the final schema**. Normalize version
 - `subcontract_orders`, `subcontract_order_lines`, `vendor_stock_movements`, `subcontract_returns`, `subcontract_charges`
 - `assembly_jobs`, `assembly_consumption`, `fg_lots`, `fg_allocations`, `packing_orders`, `packages`, `package_contents`, `shipment_plans`, `shipments`, `shipment_packages`, `shipment_events`, `delivery_confirmations`
 - `activity_events`, `audit_log`, `domain_outbox`, `idempotency_keys`, `attachments`, `alerts`, `notifications`, `workflow_task_assignments`
-- `ai_feature_flags`, `ai_requests`, `ai_outputs`, `ai_reviews`, `ai_usage_ledger`, `ai_document_chunks` (if embeddings enabled)
 
 **Stock design:** append-only inventory ledger with explicit movement types and signed quantities, unique idempotency key and reference, lot/location ownership and source/target. Rebuild snapshots/projections from ledger; use transactional checks and locks for concurrent stock allocations. Monetary fields use DECIMAL/NUMERIC with currency and precision, never JS floating-point alone for authoritative financial math. The same applies to precision-sensitive measurements.
 
@@ -539,7 +512,6 @@ Each command checks authentication, authorization, current versions, permissible
 - Protected Storage buckets and signed/authorized document access; prevent leaking drawings between companies/customers.
 - Use SQL functions with least privilege; prefer `SECURITY INVOKER`; isolate/restrict functions needing elevation and verify authorization inside.
 - Validate JWT/user identity and permissions inside Edge Functions. Do not assume client-provided IDs are safe.
-- Limit AI document retrieval to the current caller's authorized scope.
 - Audit who requested, approved or cancelled critical transitions and store before/after references. Protect append-only logs from normal-user modification.
 - Backups/restores and migration rollbacks must be tested before any production use.
 - The prototype must never use real manufacturing or customer information without consent and proper access configuration.
@@ -550,81 +522,6 @@ Each command checks authentication, authorization, current versions, permissible
 - Use queue worker for reminders, notifications, document parsing, PDF generation, cost analytics, risk scoring; at-least-once processing semantics should be assumed and consumer handlers must be idempotent.
 - Realtime subscribe to targeted status and alert projections rather than every row across all tables. Query authoritative state after reconnect.
 - Add metrics for duplicate commands, failed movements, slow APIs, blocked queues and orphaned jobs.
-
----
-
-# PART H — AI-READY FROM DAY ONE, AI OPTIONAL AT RUNTIME
-
-The key architecture choice is **not** to insert AI into the workflow's source of truth. Design a separate AI layer with stable interfaces from day one; this avoids a later structural rewrite.
-
-## H1. AI boundaries
-
-```
-App screen → AI capability request → server authorization → authorized context fetch
-          → provider adapter / model → schema validation → suggested artifact
-          → human correction/review → trusted domain command → database audit
-```
-
-For simple answer-only questions, skip the domain command; for data-changing suggestions, always require appropriate human signoff. No AI-generated recommendation can bypass QC, credit, stock or dispatch permissions.
-
-**Important backend contracts:**
-
-```ts
-type AiCapability =
-  | 'rfq.extract'
-  | 'purchase_order.extract'
-  | 'drawing.compare'
-  | 'item.similarity_search'
-  | 'quote.explain'
-  | 'order.risk_summary'
-  | 'quality.ncr_summary'
-  | 'factory.ask';
-
-type AiSuggestion<T> = {
-  requestId: string;
-  capability: AiCapability;
-  output: T;
-  evidenceRefs: string[];
-  warnings: string[];
-  modelVersion: string;
-  createdAt: string;
-  reviewStatus: 'pending' | 'accepted' | 'corrected' | 'rejected';
-};
-```
-
-Provider adapters are versioned and swappable (hosted API / local model in future). Use structured outputs, Zod validation, retries, appropriate caching, redaction and resource limits. Separate extraction confidence from actual approval; **a model's confidence is not proof of truth**.
-
-## H2. Recommended AI capability order
-
-| Feature | Proposed priority | Why/guardrail |
-|---|---|---|
-| RFQ extraction from email/PDF | High | reduces repetitive entry; confirmation required |
-| PO extraction and quote comparison | High | flags contract discrepancies; approve by authorized staff |
-| Similar-item / drawing retrieval | High | historical reference, not engineering approval |
-| Document and specification search | High | permission-scoped citations, show original version |
-| Ask Factory OS (read-only) | High | answers from queries with sources; no fabricated totals |
-| NCR summarization / drafting | Medium | helpful for investigation; human owns disposition |
-| Due-date risk prediction | Medium-later | requires clean execution and vendor data |
-| Vendor delay forecast | Medium-later | requires history |
-| Scheduling recommendations | Medium-later | compare with deterministic solver baseline |
-| Predictive maintenance | Research-later | only if sensors/history justify it |
-| Vision QC | Separate experimental scope | needs validated inspection system and human review |
-
-## H3. Deterministic-first examples
-
-**Do not use a model to compute:** `on_hand - reserved - qc_hold`, taxes, dimensional tolerance pass/fail from verified numeric values, journal totals, stock ledger balances, production yield arithmetic, or allowed order state transitions.  
-**Do use AI cautiously for:** parsing messy RFQs, comparing multiple document versions, ranking similar historical jobs, summarizing causes, natural-language access to approved reports, recommending investigation priorities.
-
-## H4. AI cost architecture
-
-- `AI_ENABLED` master flag and per-capability `ENABLED` flags; system must pass end-to-end tests with all flags off.
-- Monthly cost ceiling per company and per user; track input/output tokens, provider, model, request purpose and approximate spend.
-- Tiered models: cheap extraction/classification by default; stronger models only for exceptional complex cases with budget approval.
-- Cache by content hash, prompt/template version, extraction schema version and access scope where appropriate; invalidate on revised documents.
-- Embeddings are optional; start with SQL full-text and exact reference lookup.
-- Monitor extraction accuracy against human-corrected fields, not promotional model metrics.
-- Avoid sending drawings, proprietary prices and customer information to any vendor unless the business approves the provider/data terms.
-- If budget is exhausted or provider unavailable, display normal manual entry/standard reports rather than blocking workflow.
 
 ---
 
@@ -669,7 +566,6 @@ Every sensitive event includes actor/user, role, company/plant, entity type/ID, 
 - Dates shown in configured plant timezone; persist UTC timestamps. Display units everywhere and never silently convert.
 - WCAG-aware contrast and accessible labels; test on actual tablet/phone viewports.
 - Report/timeline displays must include record ID, last update and source of truth.
-- AI UI displays `AI suggestion` label, evidence links, editable draft, review/action by human and cost/feature status.
 
 ## J3. Prototype layout rules
 
@@ -704,7 +600,7 @@ repo/
 │   └── pwa/                         # install/update/offline UI
 ├── supabase/
 │   ├── migrations/
-│   ├── functions/                  # trusted APIs + AI gateway
+│   ├── functions/                  # trusted APIs
 │   └── seed.sql                    # fake/demo only
 ├── docs/
 │   ├── product.md
@@ -733,10 +629,10 @@ repo/
 
 1. Product and architecture summary, plus link to this brief.
 2. Rules about validated vs proposed factory processes.
-3. Strict decided stack: Vite/React/TypeScript + Supabase; installed PWA; AI optional; no Next.js.
-4. Link index of `/docs` and ownership (architecture for system structure, style for UX, workflows for states, domain model for schema, AI for AI safety/cost, security for trust boundaries, tasks for delivery status, decisions for ADRs).
+3. Strict decided stack: Vite/React/TypeScript + Supabase; installed PWA; non-AI product; no Next.js.
+4. Link index of `/docs` and ownership (architecture for system structure, style for UX, workflows for states, domain model for schema, security for trust boundaries, tasks for delivery status, decisions for ADRs).
 5. Workflow: inspect → choose smallest task → define tests → code → validate → update docs → report.
-6. Critical manufacturing transaction rules, RLS, idempotency, revisions, lot genealogy, concurrency and AI boundaries.
+6. Critical manufacturing transaction rules, RLS, idempotency, revisions, lot genealogy, concurrency and trusted command boundaries.
 7. Code quality conventions, dependency policy, migration workflow, no fake completion claims, and no production external side effects without authorization.
 8. Agent coordination: avoid concurrent edits to same feature/migration; each task declares affected files and interface contracts; integrate only validated work; reconcile architecture/DB changes centrally.
 9. Definition of done and testing evidence.
@@ -761,7 +657,6 @@ Do not duplicate workflow rules here; keep Claude-specific notes minimal.
 | `docs/style.md` | tokens, component rules, accessibility, responsive/installed-PWA behaviors, screenshots | visual/UI pattern changes |
 | `docs/domain-model.md` | ERD, entities, UOM, status model, ledger/genealogy, invariants | migration/domain changes |
 | `docs/workflows.md` | 16 stages, branches, permission gates, diagrams, examples | state transition or process change |
-| `docs/ai.md` | capability contracts, providers, privacy, prompting, budgets, evaluation, human review | AI changes |
 | `docs/security.md` | threat model, RLS, roles, secrets, storage and audit | auth, permission or data changes |
 | `docs/testing.md` | strategy, command coverage, fixtures, CI and test evidence | test/tooling change |
 | `docs/decisions.md` | ADRs including alternatives/reasons | every major architectural tradeoff |
@@ -784,7 +679,7 @@ Do not duplicate workflow rules here; keep Claude-specific notes minimal.
 ## Out of scope
 ## Planned files/modules
 ## Data migration and authorization implications
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 ## Implementation notes
 ## Validation evidence (exact command + result)
 ## Docs updated
@@ -793,7 +688,7 @@ Do not duplicate workflow rules here; keep Claude-specific notes minimal.
 
 ## K5. Definition of done
 
-A feature is done only when: application runs; permission boundaries checked; success and failure paths demonstrated; domain invariants tested; types/lint pass; relevant migration applied/reverted on a clean test DB; user flow tested; docs updated; no fake data represented as real; no undocumented architectural divergence; task and ADR statuses consistent. AI features additionally require budget control, evaluation cases, evidence display and manual fallback.
+A feature is done only when: application runs; permission boundaries checked; success and failure paths demonstrated; domain invariants tested; types/lint pass; relevant migration applied/reverted on a clean test DB; user flow tested; docs updated; no fake data represented as real; no undocumented architectural divergence; task and ADR statuses consistent.
 
 ---
 
@@ -834,9 +729,9 @@ Incoming/first-piece/in-process/final QC, NCR dispositions, rework, external ven
 
 Packing, labeling, shipment, gate-out, partial shipments, traceability backward/forward, exception board, read-only metrics.
 
-## L8 — Optional AI v1 (feature-flagged)
+## L8 — Documents, migration and approved accounting exports
 
-RFQ/PO extraction (human-reviewed), source-grounded document search, similar-item lookup and read-only Ask Factory OS. Measure correction rate, time saved and monthly cost.
+Private drawing/certificate documents, validated master import, controlled numbering and deterministic exports to the existing accounting system. No tax filing until its document rules and authorization are approved.
 
 ## L9 — Advanced extensions after evidence
 
@@ -856,8 +751,8 @@ Scheduling recommendations, supplier risk, maintenance, additional finance integ
 8. **Partial delivery:** SO 10,000 pcs, 6,000 shipped, 4,000 outstanding; actual shipment and order availability remain correct.
 9. **No internet:** shop-floor UI shows offline; attempt to record inventory move remains uncommitted with unmistakable status.
 10. **Role denial:** machine operator cannot approve price overrides, engineering revisions or QC concessions through UI or API.
-11. **AI-off:** disable every AI flag; core end-to-end path passes.
-12. **AI extraction correction:** model proposes an incorrect quantity; salesperson corrects and approves; model output and human changes are audited separately.
+11. **Current inspection:** a passed inspection for an earlier lot revision cannot release returned or topped-up material.
+12. **Production loss recovery:** a closed batch with recorded scrap frees only that lost demand for replacement work.
 13. **Double scan:** submitting the same dispatch request twice uses idempotency to avoid duplicate stock reduction/shipment event.
 14. **Vendor discrepancy:** issue 1,000 pcs to subcontractor, receive 990; ledger and discrepancy record accurately account for the missing 10.
 15. **Order command center:** prove that sales, material, operation, QC, packing and dispatch sub-statuses can coexist rather than falsely collapsing to one field.
@@ -868,9 +763,8 @@ Scheduling recommendations, supplier risk, maintenance, additional finance integ
 
 **Baseline KPIs (definitions must be documented):** RFQ-to-quote time; quote hit rate; order-to-dispatch lead time; on-time-in-full (OTIF); work-order adherence; capacity utilization; WIP aging; scrap/rework rate; QC first-pass yield; supplier lead time; material shortage frequency; inventory adjustment frequency; dispatch errors; traceability lookup time; user time spent re-entering data.
 
-**AI ROI must be measured separately:** RFQ/PO minutes saved, correction rate, successful historical retrieval, monthly provider cost, human-review time, errors caused/avoided, and improvement over deterministic rules. Do not assume an LLM increases accuracy or reduces cost without measured evidence.
 
-**Cost buckets:** PWA hosting/static delivery, Supabase instance/storage/egress/realtime/functions/database backups, labels and scanners, implementation/support, domain/security, optional AI inference/embeddings/document extraction, operational training and data migration. Verify live provider pricing before estimating INR budget. No pricing is asserted in this brief.
+**Cost buckets:** PWA hosting/static delivery, Supabase instance/storage/egress/realtime/functions/database backups, labels and scanners, implementation/support, domain/security, operational training and data migration. Verify live provider pricing before estimating INR budget. No pricing is asserted in this brief.
 
 ---
 
@@ -892,7 +786,7 @@ Use these before turning the design into a real SOP:
 12. What ERP/accounting software currently exists? Must historical data, GST invoices or e-way bill integration be preserved?
 13. What are actual internet/wifi conditions on the shop floor and device preferences (desktop/tablet/Android/iPhone)?
 14. Which steps are highest pain or error; how many orders, SKUs, users, daily movements and documents are involved?
-15. What is the actual AI/data-sharing policy, monthly operating budget and requirement for on-premises deployment?
+15. What is the data-sharing policy, monthly operating budget and requirement for on-premises deployment?
 
 **Do not hard-code any answers to these questions until validated.**
 
@@ -905,7 +799,6 @@ Use these before turning the design into a real SOP:
 | ADR-001 | React + Vite, not Next.js | PROPOSED-ACCEPTED BY DESIGN DIRECTION | Internal installed SPA; no needed SSR/SEO; revise if real server-rendering requirement appears |
 | ADR-002 | Supabase Postgres/Auth/Storage backend | USER PREFERRED / DESIGN DEFAULT | Fast integrated prototype; validate scale/operations/security against factory needs |
 | ADR-003 | Installed PWA for desktop, phone, tablet | USER DIRECTIVE | No native Electron/React Native in prototype |
-| ADR-004 | AI-ready boundary, optional AI operation | DESIGN DECISION | Avoid expensive risky AI in transactional truth; enables staged AI features without core rewrite |
 | ADR-005 | Append-only stock ledger and transactional commands | DESIGN RECOMMENDATION | Needed for traceability and concurrent accuracy |
 | ADR-006 | 16 stages as navigational backbone; separate domain state machines | USER APPROVED BACKBONE / DESIGN DETAIL | Handles parallel work, alternate routes and partial orders |
 | ADR-007 | Online-only mutation for critical operations in prototype | DESIGN RECOMMENDATION | Offline reconciliation complex and risky; validate actual connectivity |
@@ -915,4 +808,4 @@ Use these before turning the design into a real SOP:
 
 ## End condition for initial agent session
 
-After reading this document, the coding agent should **not** attempt to code the full ERP in one pass. It should initialize agreed documents, expose uncertain factory assumptions, propose the first small vertical slice with tests, and then implement iteratively as directed. Everything built must remain coherent with the 16-stage business backbone, multi-route manufacturing model, installed-PWA-only product intent for mobile/tablet, Supabase authoritative backend and optional AI architecture.
+After reading this document, the coding agent should **not** attempt to code the full ERP in one pass. It should initialize agreed documents, expose uncertain factory assumptions, propose the first small vertical slice with tests, and then implement iteratively as directed. Everything built must remain coherent with the 16-stage business backbone, multi-route manufacturing model, installed-PWA-only product intent for mobile/tablet, Supabase authoritative backend and deterministic command architecture.

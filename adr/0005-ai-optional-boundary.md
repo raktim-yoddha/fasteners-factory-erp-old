@@ -17,3 +17,7 @@ it (stable ids, document storage, event outbox). Every core workflow must pass w
 
 The MVP carries no AI cost or data-sharing risk. Adding AI later needs a provider choice and a
 data-sharing decision by the owner, both open questions.
+
+## Amendment (2026-10-11): Superseded by non-AI product scope
+The owner excludes all AI features and workflow dependencies. ADR 0017 supersedes this earlier optional boundary;
+there is no planned assistant, provider gateway or AI phase in the current product.

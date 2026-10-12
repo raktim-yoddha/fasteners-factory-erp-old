@@ -1,80 +1,62 @@
 # Domain model
 
-**DESIGN PROPOSAL** — factory workflow entities begin after master-data discovery. This document records the
-authorization foundation currently in the migration.
-
-## Tenant access
+Implemented generic model as of 2026-10-12; all factory process configuration is **DESIGN PROPOSAL** until verified. Rules live in `AGENTS.md`. Approved versions and posted events remain immutable.
 
 ```mermaid
-erDiagram
-  companies ||--o{ plants : has
-  companies ||--o{ company_memberships : scopes
-  company_memberships }o--|| profiles : identifies
-  company_memberships ||--o{ user_company_roles : grants
-  user_company_roles }o--|| role_permissions : maps
-  role_permissions }o--|| permission_definitions : names
-  companies ||--o{ audit_log : owns
+flowchart LR
+  RFQ[RFQ lines and feasibility] --> Q[Quotation lines]
+  Q --> SO[Sales order lines]
+  SO --> WO[Work orders and pinned engineering]
+  WO --> JC[Ordered job cards]
+  PR[Requisitions] --> PO[Split supplier POs]
+  PO --> GR[Receipts and QC-held lots]
+  GR --> ISS[Material issue / return / consume]
+  JC --> ISS
+  ISS --> OUT[Held production output]
+  OUT --> QC[Inspection / NCR / release]
+  QC --> RES[Reservation]
+  SO --> RES
+  RES --> PK[Shipment packages]
+  PK --> SH[Partial dispatch]
+  SH --> RET[QC-held customer returns]
 ```
 
-- `companies` and `plants` are the tenant and plant boundaries.
-- `company_memberships` records active tenancy. `user_company_roles` allows one person to have several roles.
-- `permission_definitions` and `role_permissions` are protected database facts; user metadata is never authorization.
-- `audit_log` is append-only: no authenticated insert/update/delete policy exists. Trusted future commands write it.
-- Every future operational table carries `company_id`, enables RLS, indexes its RLS filters, and uses database
-  commands for multi-record changes.
-- `bootstrap_initial_company` creates the first company, plant, membership and administrator role only when no
-  company exists. Every later tenancy change remains role-protected.
+## Tenant and commands
 
-## Master data
+Companies/plants scope records. Auth users identify approved accounts; company memberships and protected role mappings authorize actions. Active membership is required by shared permission helpers. Administration commands serialize membership/role changes and protect the last active admin. Audit and idempotency records are append-only. No role is accepted from user metadata.
 
-`customers`, `suppliers`, `items`, `drawings`, `drawing_revisions`, `warehouses`, `stock_locations` and
-`work_centres` are all company-scoped. Item, partner, warehouse and work-centre codes are unique inside the
-company. A drawing revision belongs to the same company as its drawing and item. Once a revision is approved,
-the database rejects every update; a replacement revision must be created instead.
+Presentation receives typed props/actions; feature hooks validate ingress, invoke an atomic command and refresh server truth after confirmation. Browser business-table grants are generally SELECT-only; initial master inserts use existing RLS boundaries. No component writes a multi-table transition.
 
-The operator setup screen can create customers, suppliers, items, drawing headers, warehouses, stock locations and
-work centres through individual RLS-protected inserts. It does not create or approve drawing revisions.
+## Controlled references and commercial data
 
-## Engineering versions
+Items retain base units; approved item specification versions carry fastener type, dimensions with units, thread, grade/class/coating and standard/evidence. Approved measured item-specific alternate-unit versions preserve original quantity/UOM and converted base quantity in append-only conversion events. Fractional discrete units and unrepresentable precision are rejected, never rounded. Quote/order/work lines pin immutable specification IDs.
 
-`boms` and `routings` select an output item; their revisions are identified by immutable IDs. `bom_lines` keep
-component quantity, UOM and scrap allowance as database numerics. `routing_operations` keep ordered work-centre
-steps and numeric setup/run minutes. Approved headers reject updates and private draft checks block line/operation
-mutation, so later commercial and production records can pin a revision without historical drift.
+Drawings own private file-backed revisions; approved BOM/routing/engineering versions freeze definitions and explicit output bases. Customer part/drawing references pin downstream. RFQ-wide legacy and per-line feasibility reviews coexist; quotation lines pin their exact accepted line review/engineering references. Acceptance copies immutable quote pins; it does not resolve a newer master version. Money and measurements use NUMERIC with explicit currency/unit and decimal-text transport.
 
-## Commercial order thread
+## Purchasing and stock
 
-`rfqs`, `feasibility_reviews`, `quotations` and `sales_orders` each hold their own status. Lines carry exact
-`NUMERIC` quantities, explicit UOM, and monetary prices with currency held on the quotation. Feasibility, quote
-and sales-order lines can pin the relevant drawing, BOM and routing revision IDs rather than resolving a newer
-engineering revision later.
+Requisition allocation positions derive remaining demand across supplier POs; locked allocation prevents concurrent overpurchase. Approve before partial receiving. Each receipt creates a distinct held lot; returns append bounded signed reversals. Stock positions derive physical, reserved, QC-held and available quantities from the signed ledger and remaining reservations. Expected PO receipts are not available stock.
 
-`create_rfq` is the initial RFQ write boundary: it validates the tenant customer and optional item scope, inserts
-the RFQ and its lines, writes the audit event and deduplicates retries with a command idempotency key.
-Feasibility locks and qualifies the RFQ; quotations pin only approved engineering revisions; acceptance creates a
-new sales order and pins the quotation lines rather than copying mutable engineering headers.
+Counts propose a variance against current server balance/revision; an independent reviewer confirms. Corrections append reversal events. Lot split/merge conserves quantities, preserves source edges and holds destination lots. History uses exact text event IDs and keyset pages, without hidden 100/20-row truncation.
 
-## Inventory ledger
+## Production, quality and vendor custody
 
-`stock_lots` identify stock by item and location. `stock_ledger_entries` are append-only signed movements;
-on-hand is the sum of those movements, not a mutable balance. `stock_reservations` represent the quantity
-committed to sales-order lines, and `stock_positions` derives on-hand, reserved and available-to-promise.
-The `reserve_finished_goods` command locks the sales order and lot, checks the expected order revision,
-requires a released QC lot, enforces available stock, records an audit row and accepts a caller idempotency key.
-`receive_finished_goods` adds a signed receipt to a QC-hold lot. `release_stock_lot` is a separate
-revision-checked Quality command that marks a held lot released; it does not rewrite ledger history.
+Work orders bound accepted demand and pin engineering/specifications. Ordered jobs enforce predecessor completion. Material issue removes available stores stock into WIP custody; unused returns restore held stock; consumption does not remove it twice. Outputs link actual consumed parents and enter hold. Close requires reconciled work, materials, output/loss and quality/disposition.
 
-## Packing and dispatch
+Inspection plans define exact numeric/attribute criteria, units and sample counts. Approved criteria and results are immutable; corrections supersede. Current passed inspection plus resolved containment is required for release. NCR dispositions retain reasons and actual return/rework/scrap completion. Holds are rechecked when packing/dispatch occurs, including previously reserved/packed lots.
 
-`packing_orders` and `shipments` retain independent state. `dispatch_shipment` locks the shipment, packing order,
-sales order, lots and reservations; it consumes only active reserved quantity, writes signed shipment ledger entries,
-updates the order fulfillment state and creates an audit row as one transaction.
-`prepare_packing_shipment` creates the packed order and draft shipment from one or more validated reservations,
-so the dispatch command has no browser-created state to trust.
+Vendor job-work orders record outward custody, partial returns/loss and actual completion; return lots remain inspection-held. Genealogy preserves split/merge/rework/material/output/vendor relationships. Private drawing/certificate metadata, hashes and stored bytes are distinct from evidence references; references alone never imply an uploaded or certified document.
 
-## Order Command Center
+## Equipment and capacity
 
-`get_order_command_center` is a protected read command for users with `sales.read`. It joins the existing,
-independently-stateful sales-order, reservation, packing and shipment records server-side and returns status labels,
-record counts and the next action. It deliberately does not total quantities across an order, because an order can
-contain lines with different UOMs.
+Equipment assets identify machines/tools/gauges with append-only holds, calibration and configured maintenance evidence. Immutable job assignments can be released while pending. Draft inspection plans bind gauges; approval freezes them. Trusted job-start/inspection guards recheck missing/failed/expired evidence. Unconfigured legacy jobs/plans do not receive invented requirements.
+
+Explicit plant-time work-centre shifts record available minutes after breaks. Minute allocations and releases derive capacity; locks prevent overlapping shifts and concurrent overbooking. No guessed machine rate, throughput, OEE or utilization is stored.
+
+## Dispatch, administration and transfer
+
+Packages identify actual selected lots and bounded quantities. Partial dispatch consumes the exact remaining reservation/stock commitments. Cancelling preparation never erases posted events. Customer returns are bounded against actual shipped quantity and always contain returned stock.
+
+Import previews retain exact source/hash, validation errors and reconciliation; apply revalidates atomically, creates only valid records and never overwrites history. Accounting exports are immutable approved signed-event/currency snapshots, not a general ledger or statutory tax invoice. Reports are paginated and preserve units. Search/scanning/related-record RPCs preserve caller RLS; audit browsing requires audit permission.
+
+Backups contain DB data and private file bytes; server/hosting/Auth delivery settings and secrets are separate operational configuration. See `docs/deployment.md`.

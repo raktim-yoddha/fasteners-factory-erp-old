@@ -11,9 +11,19 @@
     "test": "vitest run",
     "build": "vite build",
     "e2e": "playwright test",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm e2e",
+    "test:factory": "node scripts/test-factory.mjs",
+    "test:db": "node scripts/test-db.mjs",
+    "test:restore": "node scripts/test-restore.mjs",
+    "e2e:seed": "node scripts/seed-e2e.mjs",
+    "e2e:stack": "supabase start --exclude realtime,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "backup:create": "node scripts/create-backup.mjs",
+    "check:operations": "node scripts/check-operations.mjs",
+    "test:devices": "playwright test tests/e2e/device-acceptance.spec.ts",
+    "backup:verify": "node scripts/read-backup.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -40,6 +50,7 @@
     "workbox-window": "7.4.1"
   },
   "dependencies": {
+    "@sqlite.org/sqlite-wasm": "3.53.4-build2",
     "@supabase/supabase-js": "2.117.3",
     "@tanstack/react-query": "5.104.1",
     "react": "19.3.0",

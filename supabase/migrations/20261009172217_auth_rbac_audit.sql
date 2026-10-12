@@ -52,7 +52,7 @@ create table public.user_company_roles (
 );
 
 create table public.permission_definitions (
-  code text primary key check (code ~ '^[a-z]+(\.[a-z_]+)+$'),
+  code text primary key check (code ~ '^[a-z_]+(\.[a-z_]+)+$'),
   description text not null
 );
 

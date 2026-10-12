@@ -36,7 +36,7 @@ mobile bottom navigation, hardware, audit-history access beyond existing permiss
 No migration. Browser readers use existing authenticated table grants and RLS; audit timeline uses the existing
 `audit.read` policy. Search continues to run through the caller-RLS `search_company_records` RPC.
 
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 - Keyboard shortcut focus/clear behavior and editable-control exclusions.
 - Online/offline status and disabled critical actions.
 - Search result opens the correct record URL.
@@ -52,7 +52,7 @@ company. Record-type mapping is a narrow client boundary over existing RLS-scope
 - `pnpm test` — 33 test files and 64 tests passed.
 - `pnpm typecheck` — passed.
 - `pnpm lint` — passed.
-- `pnpm build` — passed; Vite generated the PWA service worker and manifest. The existing bundle-size warning remains.
+- `pnpm build` — passed; Vite generated the PWA service worker and manifest. This historical run warned about size; deferred workspaces/default chunking now pass the import-graph/build gate.
 - `pnpm e2e` — 1 authenticated Chromium test passed against the configured disposable Supabase environment. It created
   SAMPLE master/commercial/stock/dispatch data, opened the generated customer through global search at its record URL,
   then completed the existing concurrent-reservation and dispatch proof.
@@ -64,5 +64,11 @@ company. Record-type mapping is a narrow client boundary over existing RLS-scope
 and ADR 0015.
 
 ## Follow-ups / risks
-Current audit policy intentionally limits timeline visibility. Storage-backed attachments and certificate previews
-remain a later, separately authorized slice.
+Timeline remains permission-scoped. Private drawings/certificates and paged links/events are now implemented by TASK-0015. Physical installed acceptance remains open.
+
+
+## Reconciled validation (2026-10-12)
+`pnpm test:factory` PASS: typecheck, lint, 186 tests/62 files, 15 rollback SQL suites, read-only operations checks,
+production PWA build/chunk checks, 20 browser journeys, encrypted DB/private-object backup and restored-DB regressions;
+131.4 seconds. Recovery compared 114 tables and 93 private files. Later archive CLI guard test passed in the focused
+operations suite; final unit count is recorded in TASK-0016. Installed factory acceptance remains TASK-0008.

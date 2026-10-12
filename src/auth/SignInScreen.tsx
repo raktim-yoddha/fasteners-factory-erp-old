@@ -2,9 +2,10 @@ import { useState } from 'react'
 
 type SignInScreenProps = {
   onRequestLink: (email: string) => Promise<string | null>
+  onSolo?: () => void
 }
 
-export function SignInScreen({ onRequestLink }: SignInScreenProps) {
+export function SignInScreen({ onRequestLink, onSolo }: SignInScreenProps) {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -25,6 +26,8 @@ export function SignInScreen({ onRequestLink }: SignInScreenProps) {
           <p className="mt-4 max-w-prose text-base leading-7 text-muted">
             Use your approved work email. Access and data permissions are enforced by the factory backend.
           </p>
+          {onSolo && <button className="secondary-button mt-5" type="button" onClick={onSolo}>Use solo on this device</button>}
+          <p className="mt-3 text-sm text-muted">Solo records stay in this browser. Keep backups before changing device or clearing browser data.</p>
         </div>
         <form className="rounded-xl border border-line bg-canvas p-5" onSubmit={handleSubmit}>
           <h2 className="text-lg font-bold">Sign in</h2>

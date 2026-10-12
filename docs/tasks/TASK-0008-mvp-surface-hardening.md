@@ -27,7 +27,7 @@ migration, app/integration tests, ADR and product/style/task docs.
 ## Data migration and authorization implications
 The browser requests a session only; public account creation remains disabled. Permissions continue to be database-owned.
 
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 The app test asserts that an unconfigured backend cannot expose operations. Unit tests cover protected-command error
 translation without exposing unknown server details. The Playwright manufacturing path exercises an approved SAMPLE
 session, bootstrap when needed, master data, commercial, stock and dispatch commands. Local runs use an ignored
@@ -58,3 +58,10 @@ company, order, shipment and ledger rows remained. The new command is unavailabl
 ## Follow-ups / risks
 The hosted Supabase project is ready for an administrator-created approved user. Device installation, standalone
 launch, update prompt and offline-shell acceptance still require Windows and Android device evidence.
+
+
+## Reconciled validation (2026-10-12)
+`pnpm test:factory` PASS: typecheck, lint, 186 tests/62 files, 15 rollback SQL suites, read-only operations checks,
+production PWA build/chunk checks, 20 browser journeys, encrypted DB/private-object backup and restored-DB regressions;
+131.4 seconds. Recovery compared 114 tables and 93 private files. Later archive CLI guard test passed in the focused
+operations suite; final unit count is recorded in TASK-0016. Installed factory acceptance remains TASK-0008.

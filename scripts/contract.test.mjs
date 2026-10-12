@@ -12,6 +12,13 @@ const adrDir = new URL('adr/', root)
 const adrs = existsSync(adrDir) ? readdirSync(adrDir).filter((f) => /^\d{4}-.*\.md$/.test(f)) : []
 
 describe('the engineering contract', () => {
+  it('keeps the product deterministic without AI provider dependencies', () => {
+    expect(read('AGENTS.md')).toContain('**Non-AI product.**')
+    const manifest = JSON.parse(read('package.json'))
+    const packages = Object.keys({ ...manifest.dependencies, ...manifest.devDependencies })
+    expect(packages.filter((name) => /^(openai|@anthropic-ai\/|@google\/genai|@ai-sdk\/|langchain)/.test(name))).toEqual([])
+    expect(read('docs/roadmap.md')).not.toMatch(/\| L\d+ AI/)
+  })
   it('is the same in AGENTS.md and CLAUDE.md', () => {
     expect(read('CLAUDE.md'), 'Make the same change in AGENTS.md and CLAUDE.md.').toBe(read('AGENTS.md'))
   })

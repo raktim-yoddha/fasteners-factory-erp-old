@@ -25,7 +25,7 @@ and fix that one (and record the decision as an ADR when the rules below require
 
 ## Project Rules
 
-**Product.** Fasteners Factory ERP: an internal, authenticated, installable PWA that runs a
+**Product.** Fasteners Factory ERP: an internal, installable PWA with device-local solo workspaces and authenticated cloud team workspaces that runs a
 fastener / precision-component factory from sales enquiry to dispatch. MVP targets **Windows
 (installed PWA in Edge/Chrome)** and **Android (installed PWA in Chrome)**. iOS, Electron and React
 Native are out of scope until an ADR says otherwise.
@@ -33,14 +33,12 @@ Native are out of scope until an ADR says otherwise.
 **Decided stack (change only by ADR).** React + Vite + TypeScript (strict), no Next.js. Tailwind CSS +
 shadcn/ui. React Router. TanStack Query for server state; Zustand only for local UI state that must be
 global. `vite-plugin-pwa` (Workbox). Supabase (PostgreSQL, Auth, RLS, Storage, Realtime where
-justified, SQL migrations, Edge Functions). Zod at ingress, database constraints as final
+justified, SQL migrations, Edge Functions) for shared team data; official SQLite WASM in a dedicated OPFS worker for isolated device-local solo data (ADR 0019). Zod at ingress, database constraints as final
 enforcement. pnpm, one committed lockfile, pinned versions. No custom Node backend unless an ADR
 shows Supabase cannot meet a concrete requirement. Check current official docs before using any
 Supabase or dependency feature.
 
-**Network model.** Cloud Supabase; the factory Wi-Fi only needs internet (ADR 0003). Critical writes
-(stock, QC, job close, dispatch) are online-only. Offline means app shell, cached read-only screens
-and clearly labelled local drafts. Never show success before the server confirms.
+**Network model.** Separate authorities (ADR 0019): shared team data uses cloud Supabase, with online-only critical writes and server confirmation (ADR 0003 retained for team). Team offline means app shell, cached read-only screens and clearly labelled local drafts. Isolated solo data uses persistent device SQLite and local transactional confirmation; applicable single-owner commands can work offline. Never silently sync team records or switch command authority. Optional solo cloud backup is explicit and account-owned. Moving to team is a previewed, validated masters/opening-balance cutover with readable solo history retained; reconcile open work, hold cloud opening stock for QC, preserve source on failure and freeze solo writes only after confirmed cutover. Staff roles and independent reviews remain cloud-only. These are target architecture rules; do not claim a local feature implemented until its real SQLite path is tested.
 
 **Factory truth.** The brief is a design proposal, not Nitin Fasteners' real SOP. Label every
 process claim `VERIFIED FROM FACTORY`, `VERIFIED FROM PUBLIC SOURCE`, `INDUSTRY PATTERN`,
@@ -51,29 +49,25 @@ criteria; development and demo data is fictional and marked `SAMPLE`.
 
 1. The 16 stages are a navigation backbone, not one status field. Each object (rfq, quotation,
    sales_order, work_order, job_card, stock_movement, inspection, ncr, packing_order, shipment) has
-   its own state machine, validated server-side.
+   its own state machine, validated in the trusted transactional layer of its active authority.
 2. Stock is an append-only signed ledger with idempotency keys. On-hand, reserved, QC-hold, WIP, at-vendor
    and available-to-promise are derived, never independent mutable truth. Negative stock is rejected.
-3. Multi-entity or stock/QC/approval/dispatch changes run as one trusted server-side command (Postgres
-   RPC or Edge Function) with auth, transition, quantity, revision and idempotency checks. Components
+3. Multi-entity or stock/QC/approval/dispatch changes run as one trusted server-side command (team Postgres RPC/Edge Function, or isolated solo SQLite worker transaction) with identity/authority, transition, quantity, revision and idempotency checks. Components
    never write several tables for a business transition. Errors are structured
    (`INSUFFICIENT_AVAILABLE_STOCK`, `LOT_QC_HOLD`, `INVALID_TRANSITION`, `REVISION_CONFLICT`).
 4. BOM, routing and drawing versions are immutable once approved; quotes, orders and work orders pin
    version IDs. Lot genealogy survives split, merge, rework and packing.
-5. Money and measurements are `NUMERIC` with unit and currency, never JS floats alone. Store UTC,
+5. Money and measurements use PostgreSQL `NUMERIC` in team mode and exact decimal `TEXT` plus integer arithmetic in SQLite solo mode, with unit and currency; never SQLite `REAL` or JS floats as domain truth. Store UTC,
    display in plant timezone, show units everywhere, never convert silently.
 6. Corrections are reversal events, never edits of ledger or audit rows.
 
 **Security.** Authorization is enforced in the database and backend, never only by hiding UI. RLS on
 every exposed table, scoped by `company_id`/plant; permissions live in protected tables, not user
-metadata. Secret and service-role keys never reach the browser or any `VITE_*` variable. Storage
+metadata. Secret and service-role keys never reach the browser or any `VITE_*` variable. Solo device ownership is not cloud authorization; local history cannot impersonate a cloud staff approval, and cloud reads/commands remain RLS-protected. Storage
 buckets are private. Audit log is append-only. No real customer or factory data until the owner
 approves it. No real emails, WhatsApp, tax documents or production deploys without explicit user approval.
 
-**AI is optional.** AI lives behind a backend gateway with provider adapters, feature flags
-(`AI_ENABLED` plus per-capability), quotas and audit. AI output is an untrusted suggestion; it never
-posts stock, approves QC, commits a quote or dispatches goods, and never does arithmetic the database
-can do. Every core workflow must pass its tests with AI off. No AI work before milestone L8.
+**Non-AI product.** No AI features, providers, gateways, assistants or AI workflow dependencies are in product scope. Core workflows are deterministic and require server-confirmed operator commands (ADR 0017).
 
 **UI.** Operations tool, not a marketing site. Touch targets large on tablet and phone, barcode/QR
 entry, clear confirmation and recovery. Status is label + icon + reason, never colour alone;
@@ -89,7 +83,7 @@ architecture changes are reconciled in `docs/architecture.md` in the same change
 **Docs map (explain only; rules live here).** `docs/product.md` scope and roles;
 `docs/architecture.md` system and deployment; `docs/roadmap.md` milestones L0-L9;
 `docs/open-questions.md` unresolved discovery items; `docs/tasks/` delivery board. When first needed,
-the agent creates `docs/style.md`, `docs/domain-model.md`, `docs/workflows.md`, `docs/ai.md`,
+the agent creates `docs/style.md`, `docs/domain-model.md`, `docs/workflows.md`,
 `docs/security.md`, `docs/testing.md` from the brief's matrix (Part K3). Decisions are recorded in
 `adr/`, not a `decisions.md`.
 

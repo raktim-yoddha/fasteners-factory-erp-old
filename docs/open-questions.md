@@ -12,8 +12,7 @@ it here. Label: OPEN QUESTION. Nothing here may be hard-coded as fact.
 - Q4 answered for the initial release: Windows 11 Chrome and Android phone Chrome. Exact Android model/
   OS remains needed before device acceptance testing.
 - Q5 Expected users and concurrency for the pilot, SKUs and daily movements.
-- Q6 deferred: no camera, scanner, Bluetooth/USB hardware or label printer support is in L1. Revisit
-  before L4 warehouse workflows.
+- Q6: keyboard-wedge Code 39 and browser label sheets are implemented. Exact scanner/printer models, print dimensions and physical scan/readability evidence remain open; no camera/device driver is assumed.
 
 ## Needed before the matching milestone
 - Q7 (L3) Currency, tax (GST) treatment and numbering formats for quotes, SO, PO, challans.
@@ -21,8 +20,24 @@ it here. Label: OPEN QUESTION. Nothing here may be hard-coded as fact.
 - Q9 (L5) Real machine groups, shifts and how WIP is tagged on the floor.
 - Q10 (L6) Real QC plans, gauges, calibration and concession rules.
 - Q11 (L7) Required dispatch documents (invoice, e-way bill) and whether an existing accounting tool must be integrated.
-- Q12 (L8) AI provider, data-sharing policy, monthly budget; any need for on-premises AI.
+- Q12 (L8) Approved document retention, import mappings and accounting export ownership.
 
 ## Standing discovery list
 Brief Part O (15 factory questions) still applies when a real factory pilot is chosen; the owner decided on
 a generic product with fictional data for now, so those interviews are not blocking.
+
+
+## Operational defaults and unresolved evidence (2026-10-12)
+
+Owner delegated defaults: Cloudflare Pages/cloud Supabase; Windows Chrome/Android Chrome; keyboard-wedge Code 39 and
+browser printing; nightly 03:30 plant-time encrypted exports retained 30 days and weekly SAMPLE restore proof (ADR 0018).
+Exact live URL/project/credentials, backup/key custody and schedule activation remain unconfigured. A paid plan was not
+purchased. Actual hardware models, real factory mappings/SOP/QC/calibration and a complete hosted restore drill need
+verified evidence. `docs/pilot-acceptance.example.json` starts pending and the production gate refuses fake completion.
+
+
+## Dual-authority owner decisions (2026-10-12)
+
+The owner selected separate complete solo workspaces, optional cloud backup, and explicit masters/opening-balance
+promotion with readable solo history. Automatic bidirectional shared-record sync is excluded. ADR 0019/spec/TASK-0017
+record the design; runtime local feature parity is still implementation work, not part of prior cloud completion.

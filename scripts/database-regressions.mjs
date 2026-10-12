@@ -1,0 +1,18 @@
+export const databaseRegressions = [
+  'tests/integration/hosted-manufacturing-path.sql',
+  'tests/integration/material-procurement.sql',
+  'tests/integration/production-quality.sql',
+  'tests/integration/lot-transformations-documents.sql',
+  'tests/integration/vendor-jobwork.sql',
+  'tests/integration/customer-returns.sql',
+  'tests/integration/factory-reports.sql',
+  'tests/integration/controlled-drawings.sql',
+  'tests/integration/customer-parts.sql',
+  'tests/integration/item-controls.sql',
+  'tests/integration/line-feasibility-purchasing.sql',
+  'tests/integration/administration-transfer.sql',
+  'tests/integration/equipment-capacity.sql',
+  'tests/integration/scanner-lookup.sql',
+  'tests/integration/record-links.sql',
+  'tests/integration/solo-backup-cutover.sql',
+]

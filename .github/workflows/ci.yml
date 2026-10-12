@@ -31,3 +31,32 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm build
+  end-to-end:
+    name: Automatic SAMPLE database and browser journeys
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e:stack
+      - run: pnpm exec supabase status -o env > .env.supabase.local
+      - run: pnpm e2e:seed
+      - run: pnpm test:db
+      - run: pnpm check:operations --local
+      - run: pnpm e2e
+      - run: pnpm test:restore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+      - run: pnpm supabase:stop
+        if: always()

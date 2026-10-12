@@ -31,3 +31,26 @@ Cloudflare Pages build variable.
 variable. Playwright creates its session through Supabase Auth and passes only that session to the local preview;
 the browser never receives a service-role key. This makes the existing manufacturing path executable automatically
 on an empty development project while preserving the passwordless magic-link path for hosted CI.
+
+## Amendment (2026-10-11): automatic disposable CI and explicit failures
+
+Normal push/PR CI now starts disposable local Supabase, applies committed migrations, provisions a fictional test
+user/company through the server-only setup script, executes rollback SQL suites, then runs real Chromium journeys.
+Production remains cloud Supabase. Local containers are a test harness, not a factory deployment requirement.
+`pnpm e2e` fails on missing/unsafe configuration, uses an explicitly acknowledged SAMPLE environment, and never
+silently skips. It starts a fresh preview configured for the test backend. Bounded action timeouts, named steps,
+JSON/HTML results and failure traces make diagnostics automatic. Responsive/recovery checks run alongside the full
+commercial/procurement/concurrency/dispatch journey. CI retains reports for seven days; no credential file is uploaded.
+The disposable E2E stack starts only Postgres, Auth, Kong and PostgREST. Unused document-storage, realtime,
+administration and analytics services are excluded to reduce cold provisioning; future tests using those services
+must provision them explicitly.
+Local rollback suites use `psql` inside the existing database container; no host Postgres installation is required.
+The local email provider stays enabled while the global public-signup prohibition remains active, verified by provisioning.
+
+
+## Amendment (2026-10-12): Private-file and recovery verification
+
+The disposable stack now includes Storage because actual private drawing/certificate tests depend on it. The factory
+gate runs the shared list of 15 rollback suites, full browser journeys, read-only operations checks and encrypted
+recovery proof. CI also runs restoration. Windows desktop and Android-touch browser profiles add scanner, durable
+record routes, print isolation and offline reload; physical installation/hardware evidence stays separate (ADR 0018).

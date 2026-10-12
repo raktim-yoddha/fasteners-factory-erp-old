@@ -18,7 +18,7 @@ using tasks live in `AGENTS.md` ("Work protocol").
 ## Out of scope
 ## Planned files/modules
 ## Data migration and authorization implications
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 ## Implementation notes
 ## Validation evidence (exact command + result)
 ## Docs updated

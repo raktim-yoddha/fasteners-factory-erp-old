@@ -1,5 +1,5 @@
 # TASK-0006 — Append-only stock ledger and safe finished-goods reservation
-- Status: IN_PROGRESS
+- Status: IN_REVIEW
 - Owner/agent: Codex
 - Milestone: L3
 - Related ADRs / docs: ADR 0004; `docs/domain-model.md`; `docs/security.md`
@@ -26,7 +26,7 @@ Stock transfer, adjustment/reversal, reservation release and load testing beyond
 ## Data migration and authorization implications
 Ledger and reservation tables have no direct authenticated write grant. Receipt creates a held lot, Quality releases it by revision, and `reserve_finished_goods` checks tenant authorization, revision, QC status, availability and idempotency before writing the reservation and audit log.
 
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 Static assertions cover append-only grants, held-lot receipt/release, RLS, derived availability, idempotency lock and explicit reservation errors. The hosted browser test covers duplicate and parallel reservation calls.
 
 ## Implementation notes
@@ -47,3 +47,10 @@ The browser E2E path sends two concurrent 6-piece reservations for a 10-piece SA
 the other receives a structured `REVISION_CONFLICT` or `INSUFFICIENT_AVAILABLE_STOCK` response. The hosted rollback
 integration also covers idempotency and oversell rejection. Larger load testing remains open until real expected
 transaction volume is verified.
+
+
+## Reconciled validation (2026-10-12)
+`pnpm test:factory` PASS: typecheck, lint, 186 tests/62 files, 15 rollback SQL suites, read-only operations checks,
+production PWA build/chunk checks, 20 browser journeys, encrypted DB/private-object backup and restored-DB regressions;
+131.4 seconds. Recovery compared 114 tables and 93 private files. Later archive CLI guard test passed in the focused
+operations suite; final unit count is recorded in TASK-0016. Installed factory acceptance remains TASK-0008.

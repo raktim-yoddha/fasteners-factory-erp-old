@@ -32,9 +32,9 @@ Auth, any business table, AI, push notifications.
 ## Data migration and authorization implications
 None yet; the Supabase anon key may be in the client, the service-role key never.
 
-## Test cases (happy, failure, concurrency, AI-off as relevant)
+## Test cases (happy, failure, concurrency as relevant)
 Unit: app renders. PWA installability audit. Manual: install on one Windows and one Android device.
-AI-off: not applicable yet.
+No provider-dependent workflow is present.
 
 ## Implementation notes
 - React/Vite shell, Tailwind/shadcn configuration, React Router and TanStack Query providers are in place.
@@ -59,3 +59,10 @@ AI-off: not applicable yet.
 Docker Desktop must be running to validate the local Supabase stack. The hosted Supabase project URL/publishable
 key, region and owner remain open. Device acceptance requires a Cloudflare Pages HTTPS deployment; no production
 or real-factory connection is authorized.
+
+
+## Reconciled validation (2026-10-12)
+`pnpm test:factory` PASS: typecheck, lint, 186 tests/62 files, 15 rollback SQL suites, read-only operations checks,
+production PWA build/chunk checks, 20 browser journeys, encrypted DB/private-object backup and restored-DB regressions;
+131.4 seconds. Recovery compared 114 tables and 93 private files. Later archive CLI guard test passed in the focused
+operations suite; final unit count is recorded in TASK-0016. Installed factory acceptance remains TASK-0008.

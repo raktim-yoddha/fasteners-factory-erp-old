@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+.barcode-label {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-block: calc(var(--spacing) * 3);
+  color: var(--color-ink);
+}
+
 @theme {
   --color-canvas: #f8fafc;
   --color-panel: #ffffff;
@@ -11,6 +19,9 @@
   --color-warning: #9a3412;
   --color-safe-surface: #f0fdf4;
   --color-warning-surface: #fff7ed;
+  --color-focus: #ea580c;
+  --color-brand-hover: #1e293b;
+  --spacing-sidebar: 15rem;
 }
 
 @layer base {
@@ -22,12 +33,12 @@
 
   body { margin: 0; min-width: 320px; }
   button { font: inherit; }
-  :focus-visible { outline: 3px solid #f97316; outline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
 }
 
 @layer components {
   .primary-button {
-    @apply min-h-11 cursor-pointer rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700;
+    @apply min-h-11 cursor-pointer rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-hover;
   }
 
   .primary-button:disabled { @apply cursor-not-allowed opacity-60; }
@@ -42,11 +53,11 @@
 
   .nav-item-active { @apply bg-canvas text-ink; }
 
-  .form-label { @apply grid gap-2 text-sm font-semibold text-ink; }
+  .form-label { @apply grid min-w-0 gap-2 text-sm font-semibold text-ink; }
 
-  .form-input { @apply min-h-11 rounded-lg border border-line bg-panel px-3 text-base font-normal text-ink; }
+  .form-input { @apply min-h-11 min-w-0 w-full max-w-full rounded-lg border border-line bg-panel px-3 text-base font-normal text-ink; }
 
-  .master-form { @apply grid gap-3 rounded-lg border border-line bg-canvas p-4; }
+  .master-form { overflow-wrap: anywhere; @apply grid gap-3 rounded-lg border border-line bg-canvas p-4; }
 
   .master-form h4 { @apply text-sm font-bold; }
 
@@ -57,13 +68,43 @@
   .status-online { @apply border-safe bg-safe-surface text-safe; }
   .status-offline { @apply border-warning bg-warning-surface text-warning; }
 
-  .search-result { @apply block w-full cursor-pointer rounded-md text-left transition-colors hover:bg-canvas focus-visible:outline-none; }
+  .search-result { @apply block w-full cursor-pointer rounded-md text-left transition-colors hover:bg-canvas; }
 
   .record-panel { @apply mt-6 rounded-xl border border-line bg-panel p-5; }
 
   .keyboard-dialog { @apply w-[min(32rem,calc(100%-2rem))] rounded-xl border border-line bg-panel p-5 text-ink shadow-lg backdrop:bg-slate-950/30; }
+  .feedback { @apply mt-4 rounded-lg border border-line bg-canvas p-3 text-sm; overflow-wrap: anywhere; }
+  .feedback-blocked { @apply border-warning bg-warning-surface text-warning; }
+  .filter-bar { @apply my-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3; }
+  .workflow-switch { @apply mt-4 flex flex-wrap gap-2 border-b border-line pb-3; }
+  .record-list { @apply grid gap-2 sm:grid-cols-2; }
+  .record-list-button { @apply flex min-h-11 min-w-0 w-full cursor-pointer flex-col gap-1 rounded-lg border border-line bg-canvas p-3 text-left text-sm; overflow-wrap: anywhere; }
+  .record-list-button[aria-pressed=true] { @apply border-brand bg-panel; }
+  .record-card { @apply min-w-0 rounded-lg border border-line bg-canvas p-3 text-sm; overflow-wrap: anywhere; }
+  .detail-summary { overflow-wrap: anywhere; @apply mt-4 grid gap-2 rounded-lg border border-line bg-canvas p-4; }
+  .empty-state { @apply my-3 text-sm leading-6 text-muted; }
+  .revision-summary { @apply grid gap-2 rounded-lg border border-line bg-panel p-3 text-sm sm:grid-cols-3; }
+  .revision-summary dt { @apply font-semibold text-muted; }
+  .revision-summary dd { overflow-wrap: anywhere; }
+  .checkbox-label { @apply flex min-h-11 items-center gap-2 text-sm font-semibold; }
+  .checkbox-label input { @apply size-5; }
+}
+
+@media print {
+  body * { visibility: hidden; }
+  .printable-quotation, .printable-quotation * { visibility: visible; }
+  .printable-quotation { position: absolute; inset: 0; }
+  .no-print { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+/* User-invoked package printing contains only confirmed contents and lot identity. */
+.package-print-sheet { display: none; }
+@media print {
+  body:has(> .package-print-sheet) > :not(.package-print-sheet) { display: none; }
+  .package-print-sheet { display: block; }
+  .package-print-sheet, .package-print-sheet * { visibility: visible; }
+  .package-label { break-inside: avoid; }
 }

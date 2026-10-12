@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { workspaceMode } from '@/local/mode'
 
 const subscribe = (onStoreChange: () => void) => {
   window.addEventListener('online', onStoreChange)
@@ -10,7 +11,8 @@ const subscribe = (onStoreChange: () => void) => {
   }
 }
 
-const getSnapshot = () => navigator.onLine
+// Existing operation gates mean authority available. Solo availability is established at startup.
+const getSnapshot = () => workspaceMode() === 'solo' || navigator.onLine
 
 export function useNetworkStatus() {
   return useSyncExternalStore(subscribe, getSnapshot, () => true)

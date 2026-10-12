@@ -19,6 +19,9 @@ describe('authorization migration', () => {
   })
 
   it('keeps the project configuration closed to public sign-up', () => {
-    expect(config.match(/enable_signup = false/g)).toHaveLength(3)
+    const auth = config.split('[auth]')[1]?.split(/\r?\n\[/)[0]
+    const email = config.split('[auth.email]')[1]?.split(/\r?\n\[/)[0]
+    expect(auth).toMatch(/^enable_signup = false$/m)
+    expect(email).toMatch(/^enable_signup = true$/m)
   })
 })

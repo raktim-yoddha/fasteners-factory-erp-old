@@ -27,8 +27,9 @@ Explains visual decisions; rules live in `AGENTS.md`. **DESIGN PROPOSAL** until 
   mobile summary cards are not introduced until a workflow needs the same data in both layouts.
 - The current component inventory is: page header, record header, status label, blocked callout, empty/loading/error
   states, confirmation feedback, audit timeline, global-search field and result list, responsive navigation, and
-  primary/secondary action controls. Confirmation sheets, filter bars, data tables and mobile summary cards remain
-  later workflow-specific work.
+  primary/secondary action controls, filter bars, responsive record/stock cards, workflow step controls,
+  shared command feedback and engineering revision summaries. Confirmation sheets and a generalized data-table
+  system remain later work.
 - `Ctrl/Cmd+K`, `/` outside editable fields, and `Esc` are documented navigation shortcuts. They focus or clear
   search only; they never invoke a factory command.
 
@@ -36,10 +37,27 @@ Explains visual decisions; rules live in `AGENTS.md`. **DESIGN PROPOSAL** until 
 
 - Chrome receives an install action only when the browser exposes the install event; otherwise the UI gives
   Chrome menu guidance and does not pretend the app is installed.
-- An update prompt reloads only after a new service worker is ready.
+- An update prompt requires save/copy guidance and explicit reload confirmation after a new worker is ready. Failed updates preserve the screen; offline updates are disabled.
 - Offline caches app-shell assets only. It does not cache business data or queue writes.
 
 ## Component boundary
 
 `src/components/ui` is the shadcn/ui primitive location. Foundation layout and PWA state components live
 outside it and receive typed inputs; they do not persist data or call Supabase.
+
+## Commercial and material surfaces
+
+`docs/design.md` explains operator jobs and workflow dependencies. Filters and form controls shrink within phone
+columns; long identifiers wrap rather than widening the page. Select controls have explicit accessible names.
+Date fields remain visible; timestamps display Asia/Kolkata. Raw focus/hover colours are centralized theme tokens.
+Approved quotation printing displays only the review. It is not a statutory invoice or a certificate.
+Role permission reads control action availability, while every server command independently rechecks authority.
+
+
+## Shared controls and labels (2026-10-12)
+
+ActionForm, CommandFeedback, RevisionSummary, StockBalanceSummary, ItemSpecificationSummary, UnitConversionSelect,
+HistoryPagination and BarcodeLabel are reused across operational modules. Units and version pins stay visible; exact
+numbers format without JS float coercion. Lot/package print portals contain only confirmed selected identity/contents.
+Scanner input has an explicit label, Enter behavior and ambiguity choices. Readiness blockers contain actual reasons;
+capacity needs explicit shift/minute configuration. Desktop/Android-touch print/offline/scanner profiles are automated.

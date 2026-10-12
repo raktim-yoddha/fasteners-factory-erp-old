@@ -1,0 +1,7 @@
+{
+  "factory_configuration": { "status": "pending", "reviewer": "", "checked_at": "", "evidence": "" },
+  "windows_install": { "status": "pending", "reviewer": "", "checked_at": "", "evidence": "" },
+  "android_install": { "status": "pending", "reviewer": "", "checked_at": "", "evidence": "" },
+  "scanner_printer": { "status": "pending", "reviewer": "", "checked_at": "", "evidence": "" },
+  "production_restore": { "status": "pending", "reviewer": "", "checked_at": "", "evidence": "" }
+}

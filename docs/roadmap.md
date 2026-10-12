@@ -13,13 +13,22 @@ Status of individual tasks lives in `docs/tasks/TASKS.md`.
 | L5 Production | Work orders, routings, job cards, work-centre state, output/scrap/rework, tool readiness, tablet UX | shop-floor feedback |
 | L6 Quality + subcontract | Inspections, NCR, rework, vendor custody, certificates, FG release | QC plan samples |
 | L7 Dispatch + reports | Labels, shipment, gate-out, partial shipments, traceability, exception board | document formats |
-| L8 AI v1 (flagged) | RFQ/PO extraction, document search, similar items, read-only Q&A | provider + data-sharing + budget |
-| L9 Extensions | Scheduling, supplier risk, maintenance, finance, native clients, telemetry | evidence from use |
+| L8 Documents + migration | Private certificates/drawings, validated imports and approved accounting exports | real document samples and mappings |
+| L9 Verified factory extensions | Tool/gauge readiness, maintenance and capacity/calendar only when needed | evidence from use |
 
 MVP definition: L1-L3 complete, the brief's Part M scenarios that apply (1, 3, 10, 11, 13, and 15 in
 part) passing, installed and demoed on one Windows PC and one Android device.
 
-## First tasks
+## Delivered software and remaining acceptance
 
-TASK-0001 is in review. TASK-0002 through TASK-0008 are implemented in local vertical slices and remain
-in progress until their hosted Supabase integration, device installation and acceptance checks are complete.
+The generic non-AI software through L9 is implemented on SAMPLE data: production/quality, vendor custody, split/merge,
+private documents, packages/returns, reports, approved item conversions/specifications, per-line feasibility, split POs,
+access/audit, controlled transfer, equipment/calibration/maintenance, explicit capacity, scanner/labels and paged history.
+UX-0/1 foundations, UX-2 commercial, UX-3 materials, UX-4 production and UX-5 quality now have automatic test coverage.
+TASK-0013/0014 record core production/quality; TASK-0015 records the completed standard extensions; TASK-0016 adds
+operational gates, encrypted backups, restore scheduling and device software acceptance.
+
+Physical Windows/Android installation, scan/print quality, real factory setup, live credentials/backup activation and
+hosted production restoration remain acceptance work (TASK-0008). Do not mark a factory rollout complete from SAMPLE
+software tests. Current behavior is in `docs/design.md`; exact command/results are in the task board and task records.
+No unrelated payroll, banking, retail, tax-filing or AI phase is scheduled. Factory discovery governs future extensions.

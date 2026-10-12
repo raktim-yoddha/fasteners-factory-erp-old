@@ -1,5 +1,5 @@
 # TASK-0005 — RFQ through sales order record chain
-- Status: IN_PROGRESS
+- Status: IN_REVIEW
 - Owner/agent: Codex
 - Milestone: L3
 - Related ADRs / docs: ADR 0004; `docs/domain-model.md`
@@ -26,8 +26,8 @@ Commercial detail screens, stock reservation, packing, dispatch and hosted integ
 ## Data migration and authorization implications
 No direct authenticated write grant exists for these stateful tables. Trusted commands own RFQ creation, feasibility, quotation and sales-order transitions.
 
-## Test cases (happy, failure, concurrency, AI-off as relevant)
-Static assertions cover tenant RLS, numeric amounts, pinning references and guarded RFQ creation; hosted tests await provisioning.
+## Test cases (happy, failure, concurrency as relevant)
+Static assertions cover tenant RLS, numeric amounts, pinning references and guarded RFQ creation; hosted/local rollback tests and real browser journeys execute the guarded chain.
 
 ## Implementation notes
 The sales-order status is independent from RFQ/quote status; it is not a global workflow field.
@@ -39,4 +39,11 @@ The sales-order status is independent from RFQ/quote status; it is not a global 
 `adr/0008-rfq-command-boundary.md`, `adr/0009-commercial-state-command-chain.md`, `docs/architecture.md`, `docs/domain-model.md` and `docs/tasks/TASK-0008-mvp-surface-hardening.md`.
 
 ## Follow-ups / risks
-Commercial detail screens and multi-line quotations remain later work; the hosted Supabase project is connected.
+Commercial detail, multi-line quotations and per-line feasibility are implemented in TASK-0011/TASK-0015. Real dates/pricing/document policy remains factory configuration.
+
+
+## Reconciled validation (2026-10-12)
+`pnpm test:factory` PASS: typecheck, lint, 186 tests/62 files, 15 rollback SQL suites, read-only operations checks,
+production PWA build/chunk checks, 20 browser journeys, encrypted DB/private-object backup and restored-DB regressions;
+131.4 seconds. Recovery compared 114 tables and 93 private files. Later archive CLI guard test passed in the focused
+operations suite; final unit count is recorded in TASK-0016. Installed factory acceptance remains TASK-0008.

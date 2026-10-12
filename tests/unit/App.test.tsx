@@ -11,6 +11,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: /fasteners factory erp/i })).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'Backend setup is required.' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Choose your workspace.' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Use solo on this device' })).toBeEnabled()
   })
 })

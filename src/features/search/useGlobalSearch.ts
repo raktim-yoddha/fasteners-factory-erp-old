@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
 
-const searchResultSchema = z.object({ record_type: z.string(), record_id: z.uuid(), label: z.string() })
+export const searchResultSchema = z.object({ record_type: z.string(), record_id: z.uuid(), label: z.string() })
 export type GlobalSearchResult = z.infer<typeof searchResultSchema>
 
 export function useGlobalSearch(companyId: string | null, query: string) {

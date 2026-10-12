@@ -9,25 +9,56 @@ vi.mock('@/features/records/useRecordWorkspace', () => ({
     isLoading: false,
     isError: false,
     data: {
-      kind: 'sales-order', title: 'SO-001', state: 'open', source: 'Accepted sales order', lastRecordedAt: '2026-10-10T12:00:00.000Z', nextWorkspace: 'Sales orders',
+      kind: 'sales-order',
+      title: 'SO-001',
+      state: 'open',
+      source: 'Accepted sales order',
+      lastRecordedAt: '2026-10-10T12:00:00.000Z',
+      nextWorkspace: 'Sales orders',
       summary: [{ label: 'Customer PO', value: 'PO-001' }],
-      relatedRecords: [{ id: '00000000-0000-4000-8000-000000000002', label: 'Q-001', kind: 'quotation' }],
+      relatedRecords: [
+        {
+          id: '00000000-0000-4000-8000-000000000002',
+          label: 'Q-001',
+          kind: 'quotation',
+        },
+      ],
       timeline: [],
-    }
-  })
+    },
+  }),
 }))
 
 describe('RecordWorkspacePanel', () => {
   it('shows record context, permission-limited history and linked record navigation', () => {
     const onOpenRecord = vi.fn()
-    render(<RecordWorkspacePanel companyId="00000000-0000-4000-8000-000000000001" recordId="00000000-0000-4000-8000-000000000001" recordType="sales-order" onBack={vi.fn()} onOpenRecord={onOpenRecord} />)
+    render(
+      <RecordWorkspacePanel
+        companyId="00000000-0000-4000-8000-000000000001"
+        recordId="00000000-0000-4000-8000-000000000001"
+        recordType="sales-order"
+        onBack={vi.fn()}
+        onOpenRecord={onOpenRecord}
+      />,
+    )
 
     expect(screen.getByRole('heading', { name: 'SO-001' })).toBeVisible()
     expect(screen.getByText('Customer PO')).toBeVisible()
+    const summaryTab = screen.getByRole('tab', { name: 'Summary' })
+    summaryTab.focus()
+    fireEvent.keyDown(summaryTab, { key: 'ArrowRight' })
+    expect(screen.getByRole('tab', { name: 'Timeline' })).toHaveFocus()
+    expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Timeline')
     fireEvent.click(screen.getByRole('tab', { name: 'Timeline' }))
-    expect(screen.getByText('No audit entries are available under your current permissions.')).toBeVisible()
+    expect(
+      screen.getByText(
+        'No audit entries are available under your current permissions.',
+      ),
+    ).toBeVisible()
     fireEvent.click(screen.getByRole('tab', { name: 'Linked records' }))
     fireEvent.click(screen.getByRole('button', { name: 'Open' }))
-    expect(onOpenRecord).toHaveBeenCalledWith('quotation', '00000000-0000-4000-8000-000000000002')
+    expect(onOpenRecord).toHaveBeenCalledWith(
+      'quotation',
+      '00000000-0000-4000-8000-000000000002',
+    )
   })
 })

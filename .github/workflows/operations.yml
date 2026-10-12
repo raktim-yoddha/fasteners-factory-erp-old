@@ -1,0 +1,62 @@
+# ADR 0018: nightly encrypted exports and weekly SAMPLE recovery proof.
+name: Operations recovery
+on:
+  schedule:
+    - cron: '0 22 * * *' # Nightly, 03:30 Asia/Kolkata
+    - cron: '0 21 * * 0' # Weekly SAMPLE restore proof
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: operations-recovery
+  cancel-in-progress: false
+jobs:
+  restore-proof:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 21 * * 0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm e2e:stack
+      - run: pnpm exec supabase status -o env > .env.supabase.local
+      - run: pnpm e2e:seed
+      - run: pnpm check:operations --local
+      - run: pnpm test:restore
+      - run: pnpm supabase:stop
+        if: always()
+  encrypted-backup:
+    if: vars.ERP_BACKUP_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '0 22 * * *')
+    environment: production-operations
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ERP_PROJECT_REF: ${{ vars.ERP_PROJECT_REF }}
+      ERP_SUPABASE_URL: ${{ vars.ERP_SUPABASE_URL }}
+      ERP_DATABASE_URL: ${{ secrets.ERP_DATABASE_URL }}
+      ERP_STORAGE_SERVICE_KEY: ${{ secrets.ERP_STORAGE_SERVICE_KEY }}
+      ERP_BACKUP_KEY: ${{ secrets.ERP_BACKUP_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Reuse the pinned CLI's PostgreSQL tools; this disposable DB receives no production rows.
+      - run: pnpm e2e:stack
+      - run: pnpm backup:create
+      - uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-factory-backup-${{ github.run_id }}
+          path: backups/*.fferp
+          if-no-files-found: error
+          retention-days: 30
+      - run: pnpm supabase:stop
+        if: always()

@@ -1,0 +1,125 @@
+-- Executable regression assertions. Isolated SAMPLE tenants and identities always roll back.
+begin;
+select set_config('app.sample_operator_id',gen_random_uuid()::text,true);
+select set_config('app.sample_reviewer_id',gen_random_uuid()::text,true);
+select set_config('app.sample_outsider_id',gen_random_uuid()::text,true);
+select set_config('app.sample_company_id',gen_random_uuid()::text,true);
+insert into auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
+select current_setting(setting)::uuid,'authenticated','authenticated','sample+'||current_setting(setting)||'@invalid.test',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"display_name":"SAMPLE Operator"}'::jsonb,now(),now()
+from unnest(array['app.sample_operator_id','app.sample_reviewer_id','app.sample_outsider_id']) setting;
+insert into public.companies(id,name,created_by) values(current_setting('app.sample_company_id')::uuid,'SAMPLE Procurement Test',current_setting('app.sample_operator_id')::uuid);
+insert into public.plants(company_id,name) values(current_setting('app.sample_company_id')::uuid,'SAMPLE Plant');
+insert into public.company_memberships(company_id,user_id)
+select current_setting('app.sample_company_id')::uuid,current_setting(setting)::uuid from unnest(array['app.sample_operator_id','app.sample_reviewer_id']) setting;
+insert into public.user_company_roles(company_id,user_id,role)
+select current_setting('app.sample_company_id')::uuid,current_setting(setting)::uuid,case when setting='app.sample_operator_id' then 'admin'::public.app_role else 'stores'::public.app_role end from unnest(array['app.sample_operator_id','app.sample_reviewer_id']) setting;
+select set_config('app.sample_planner_id',gen_random_uuid()::text,true);
+insert into auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
+ values(current_setting('app.sample_planner_id')::uuid,'authenticated','authenticated','sample+'||current_setting('app.sample_planner_id')||'@invalid.test',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"display_name":"SAMPLE Planner"}'::jsonb,now(),now());
+insert into public.company_memberships(company_id,user_id) values(current_setting('app.sample_company_id')::uuid,current_setting('app.sample_planner_id')::uuid);
+insert into public.user_company_roles(company_id,user_id,role) values(current_setting('app.sample_company_id')::uuid,current_setting('app.sample_planner_id')::uuid,'planning');
+select set_config('app.sample_packing_id',gen_random_uuid()::text,true);
+insert into auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
+ values(current_setting('app.sample_packing_id')::uuid,'authenticated','authenticated','sample+'||current_setting('app.sample_packing_id')||'@invalid.test',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"display_name":"SAMPLE Packing"}'::jsonb,now(),now());
+insert into public.company_memberships(company_id,user_id) values(current_setting('app.sample_company_id')::uuid,current_setting('app.sample_packing_id')::uuid);
+insert into public.user_company_roles(company_id,user_id,role) values(current_setting('app.sample_company_id')::uuid,current_setting('app.sample_packing_id')::uuid,'packing_dispatch');
+set local role authenticated;
+select set_config('request.jwt.claim.sub',current_setting('app.sample_operator_id'),true);
+select set_config('request.jwt.claim.role','authenticated',true);
+
+do $$
+declare c uuid:=current_setting('app.sample_company_id')::uuid;item uuid;customer uuid;wh uuid;loc uuid;lot uuid;plan uuid;
+ rfq uuid;q uuid;so uuid;line uuid;reservation uuid;ship uuid;ship_line uuid;receipt uuid;returned uuid;payload jsonb;ncr uuid;j jsonb;
+begin
+ insert into public.items(company_id,sku,description,base_uom) values(c,'SAMPLE-RETURN','SAMPLE returned fasteners','pcs') returning id into item;
+ insert into public.customers(company_id,code,name) values(c,'SAMPLE-RETURN','SAMPLE return customer') returning id into customer;
+ insert into public.warehouses(company_id,plant_id,code,name) select c,id,'SAMPLE-W','SAMPLE warehouse' from public.plants where company_id=c returning id into wh;
+ insert into public.stock_locations(company_id,warehouse_id,code,name) values(c,wh,'SAMPLE-L','SAMPLE receiving') returning id into loc;
+ rfq:=public.create_rfq(c,'SAMPLE-RFQ',customer,'SAMPLE return fixture',jsonb_build_array(jsonb_build_object('item_id',item,'requested_description','SAMPLE fasteners','quantity',10,'uom','pcs','required_by',current_date+7)),'rfq');
+ perform public.record_feasibility(c,rfq,'feasible',null,null,null,'SAMPLE stock supply',1,'feasible');
+ q:=public.create_quotation(c,rfq,'SAMPLE-Q','INR',current_date+30,jsonb_build_array(jsonb_build_object('item_id',item,'quantity',10,'uom','pcs','unit_price',1)),'quote');
+ perform public.approve_quotation(c,q,1,'approve-quote');
+ so:=public.accept_quotation_create_sales_order(c,q,'SAMPLE-SO','SAMPLE-PO',current_date+7,2,'accept');
+ select id into line from public.sales_order_lines where sales_order_id=so;
+ lot:=public.receive_finished_goods(c,item,loc,'SAMPLE-SOURCE',10,'pcs','receipt');
+ plan:=public.quality_command(c,'create_plan',jsonb_build_object('item_id',item,'label','SAMPLE condition','version','A','sample_size',1,'characteristics','[{"key":"condition","label":"SAMPLE condition","type":"attribute","expected":"PASS"}]'::jsonb),'plan');
+ perform public.quality_command(c,'approve_plan',jsonb_build_object('plan_id',plan),'plan-approve');
+ perform public.quality_command(c,'inspect',jsonb_build_object('plan_id',plan,'lot_id',lot,'job_card_id',null,'kind','incoming','revision',1,'readings','[{"key":"condition","values":["PASS"]}]'::jsonb,'reason','SAMPLE'),'source-check');
+ perform public.release_stock_lot(c,lot,1,'release');
+ reservation:=public.reserve_finished_goods(c,line,lot,10,1,'reserve');
+ ship:=public.prepare_packing_shipment(c,so,'SAMPLE-PACK','SAMPLE-SHIP',jsonb_build_array(jsonb_build_object('reservation_id',reservation,'quantity',6)),2,'pack');
+ select id into ship_line from public.shipment_lines where shipment_id=ship;
+ payload:=jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',1,'location_id',loc,'return_number','SAMPLE-RETURN-ONE','lot_code','SAMPLE-RETURN-LOT','quantity','2','uom','pcs','reference','SAMPLE inward note','reason','SAMPLE customer condition complaint');
+ begin perform public.receive_customer_return(c,payload,'not-shipped');raise exception 'SAMPLE_UNSHIPPED_RETURN_ALLOWED';exception when others then if sqlerrm<>'INVALID_TRANSITION' then raise;end if;end;
+ receipt:=public.add_shipment_package(c,jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',1,'quantity','2','uom','pcs','package_code','SAMPLE-BOX-ONE'),'box-one');
+ if public.add_shipment_package(c,jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',1,'quantity','2','uom','pcs','package_code','SAMPLE-BOX-ONE'),'box-one')<>receipt then raise exception 'SAMPLE_PACKAGE_RETRY_DUPLICATED';end if;
+ begin perform public.add_shipment_package(c,jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',1,'quantity','1','uom','pcs','package_code','SAMPLE-BOX-STALE'),'stale-box');raise exception 'SAMPLE_PACKAGE_STALE_ALLOWED';exception when others then if sqlerrm<>'REVISION_CONFLICT' then raise;end if;end;
+ begin perform public.add_shipment_package(c,jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',2,'quantity','5','uom','pcs','package_code','SAMPLE-BOX-EXCESS'),'excess-box');raise exception 'SAMPLE_PACKAGE_EXCESS_ALLOWED';exception when others then if sqlerrm<>'PACKAGE_QUANTITY_EXCEEDED' then raise;end if;end;
+ begin perform public.dispatch_shipment(c,ship,2,'incomplete-box');raise exception 'SAMPLE_PACKAGE_INCOMPLETE_DISPATCH';exception when others then if sqlerrm<>'PACKAGES_INCOMPLETE' then raise;end if;end;
+ if exists(select 1 from public.stock_ledger_entries where source_type='shipment_line' and source_id=ship_line) or not exists(select 1 from public.stock_positions where lot_id=lot and on_hand=10 and reserved=10) then raise exception 'SAMPLE_PACKAGE_FAILED_DISPATCH_POSTED_STOCK';end if;
+ perform public.add_shipment_package(c,jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',2,'quantity','4','uom','pcs','package_code','SAMPLE-BOX-TWO'),'box-two');
+ perform public.dispatch_shipment(c,ship,3,'dispatch');
+ begin perform public.add_shipment_package(c,jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',4,'quantity','1','uom','pcs','package_code','SAMPLE-BOX-LATE'),'late-box');raise exception 'SAMPLE_PACKAGE_POSTED_WRITE';exception when others then if sqlerrm<>'INVALID_TRANSITION' then raise;end if;end;
+ payload:=payload||jsonb_build_object('shipment_revision',4);
+ begin perform public.receive_customer_return(c,payload||'{"shipment_revision":null}','missing-revision');raise exception 'SAMPLE_RETURN_MISSING_REVISION_ALLOWED';exception when others then if sqlerrm<>'REVISION_CONFLICT' then raise;end if;end;
+ begin perform public.receive_customer_return(c,payload||'{"shipment_revision":1}','stale');raise exception 'SAMPLE_RETURN_STALE_ALLOWED';exception when others then if sqlerrm<>'REVISION_CONFLICT' then raise;end if;end;
+ begin perform public.receive_customer_return(c,payload||'{"quantity":"7"}','over-return');raise exception 'SAMPLE_RETURN_ABOVE_SHIPPED_ALLOWED';exception when others then if sqlerrm<>'CUSTOMER_RETURN_QUANTITY_EXCEEDED' then raise;end if;end;
+ begin perform public.receive_customer_return(c,payload||'{"quantity":"0.0000001"}','rounded');raise exception 'SAMPLE_RETURN_ROUNDED';exception when others then if sqlerrm<>'INVALID_QUANTITY' then raise;end if;end;
+ begin perform public.receive_customer_return(c,payload||'{"uom":"kg"}','unit');raise exception 'SAMPLE_RETURN_UNIT_CONVERTED';exception when others then if sqlerrm<>'UOM_MISMATCH' then raise;end if;end;
+ begin perform public.receive_customer_return(c,payload||jsonb_build_object('location_id',gen_random_uuid()),'location');raise exception 'SAMPLE_RETURN_BAD_LOCATION';exception when others then if sqlerrm<>'LOCATION_NOT_FOUND' then raise;end if;end;
+ receipt:=public.receive_customer_return(c,payload,'return-one');
+ if public.receive_customer_return(c,payload,'return-one')<>receipt then raise exception 'SAMPLE_RETURN_RETRY_DUPLICATED';end if;
+ begin perform public.receive_customer_return(c,payload||'{"quantity":"1"}','return-one');raise exception 'SAMPLE_RETURN_CHANGED_RETRY_ALLOWED';exception when others then if sqlerrm<>'IDEMPOTENCY_CONFLICT' then raise;end if;end;
+ select lot_id into returned from public.customer_return_receipts where id=receipt;
+ if not exists(select 1 from public.shipment_return_positions where id=ship_line and shipped_quantity=6 and returned_quantity=2 and returnable_quantity=4) then raise exception 'SAMPLE_RETURN_BALANCE_WRONG';end if;
+ if not exists(select 1 from public.stock_positions where lot_id=returned and on_hand=2 and available_to_promise=0 and qc_status='hold') or not exists(select 1 from public.lot_genealogy where parent_lot_id=lot and child_lot_id=returned and customer_return_id=receipt and quantity=2) then raise exception 'SAMPLE_RETURN_HISTORY_MISSING';end if;
+ if not exists(select 1 from public.stock_positions where lot_id=lot and on_hand=4 and reserved=4) or not exists(select 1 from public.sales_orders where id=so and status='partially_shipped' and revision=3) then raise exception 'SAMPLE_RETURN_MUTATED_ORIGINAL';end if;
+ if (public.get_factory_report(c,'backlog')->'rows'->0->>'quantity')::numeric is distinct from 4 then raise exception 'SAMPLE_RETURN_REPORT_REOPENED_DEMAND';end if;
+ if not exists(select 1 from public.lot_trace_context where lot_id=returned and requires_final and sales_order_line_id is null and cardinality(work_order_ids)=0) then raise exception 'SAMPLE_RETURN_REOPENED_OLD_WORK';end if;
+ begin perform public.release_stock_lot(c,returned,1,'bypass');raise exception 'SAMPLE_RETURN_OLD_QC_INHERITED';exception when others then if sqlerrm<>'INSPECTION_REQUIRED' then raise;end if;end;
+ begin perform public.receive_finished_goods(c,item,loc,'SAMPLE-RETURN-LOT',1,'pcs','topup');raise exception 'SAMPLE_RETURN_MANUAL_TOPUP_ALLOWED';exception when others then if sqlerrm<>'MANAGED_LOT_RECEIPT' then raise;end if;end;
+ begin perform public.quality_command(c,'inspect',jsonb_build_object('plan_id',plan,'lot_id',returned,'job_card_id',null,'kind','incoming','revision',1,'readings','[{"key":"condition","values":["PASS"]}]'::jsonb,'reason','SAMPLE'),'wrong-inspection');raise exception 'SAMPLE_RETURN_INCOMING_BYPASS';exception when others then if sqlerrm<>'INSPECTION_CONTEXT_MISMATCH' then raise;end if;end;
+ perform public.quality_command(c,'inspect',jsonb_build_object('plan_id',plan,'lot_id',returned,'job_card_id',null,'kind','final','revision',1,'readings','[{"key":"condition","values":["PASS"]}]'::jsonb,'reason','SAMPLE fresh return check'),'return-check');
+ perform public.release_stock_lot(c,returned,1,'return-release');
+ if not exists(select 1 from public.stock_positions where lot_id=returned and available_to_promise=2) then raise exception 'SAMPLE_RETURN_RELEASE_MISSING';end if;
+ payload:=payload||'{"return_number":"SAMPLE-RETURN-TWO","lot_code":"SAMPLE-RETURN-TWO","quantity":"4"}';
+ receipt:=public.receive_customer_return(c,payload,'return-two');
+ select lot_id into returned from public.customer_return_receipts where id=receipt;
+ ncr:=public.quality_command(c,'create_ncr',jsonb_build_object('lot_id',returned,'revision',1,'quantity','1','uom','pcs','reason','SAMPLE returned damage'),'ncr');
+ if (public.get_factory_report(c,'ncr')->'rows'->0->>'quantity')::numeric is distinct from 1 then raise exception 'SAMPLE_NCR_REPORT_AFFECTED_QUANTITY';end if;
+ perform public.quality_command(c,'resolve_ncr',jsonb_build_object('ncr_id',ncr,'revision',1,'disposition','scrap','reason','SAMPLE reviewed damaged quantity'),'scrap');
+ if not exists(select 1 from public.stock_positions where lot_id=returned and on_hand=3 and available_to_promise=0) then raise exception 'SAMPLE_RETURN_NCR_NOT_CONTAINED';end if;
+ if not exists(select 1 from public.shipment_return_positions where id=ship_line and returnable_quantity=0 and returned_quantity=6) then raise exception 'SAMPLE_RETURN_SCRAP_REOPENED_CUSTODY';end if;
+ begin perform public.receive_customer_return(c,payload||'{"return_number":"SAMPLE-RETURN-THREE","lot_code":"SAMPLE-RETURN-THREE","quantity":"1"}','return-three');raise exception 'SAMPLE_CUMULATIVE_OVERRETURN';exception when others then if sqlerrm<>'CUSTOMER_RETURN_QUANTITY_EXCEEDED' then raise;end if;end;
+ begin update public.customer_return_receipts set quantity=99 where id=receipt;raise exception 'SAMPLE_RETURN_CLIENT_EDIT';exception when insufficient_privilege then null;end;
+ begin update public.shipment_packages set quantity=99 where company_id=c;raise exception 'SAMPLE_PACKAGE_CLIENT_EDIT';exception when insufficient_privilege then null;end;
+ ship:=public.prepare_packing_shipment(c,so,'SAMPLE-PACK-CORRECTION','SAMPLE-SHIP-CORRECTION',jsonb_build_array(jsonb_build_object('reservation_id',reservation,'quantity',2)),3,'correct-pack');
+ select id into ship_line from public.shipment_lines where shipment_id=ship;
+ receipt:=public.add_shipment_package(c,jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',1,'quantity','2','uom','pcs','package_code','SAMPLE-VOID-BOX'),'void-box');
+ perform public.cancel_prepared_shipment(c,ship,2,'SAMPLE packing correction before gate-out','cancel-packing');
+ if not exists(select 1 from public.shipment_packages where id=receipt and quantity=2) or not exists(select 1 from public.shipments where id=ship and status='cancelled') then raise exception 'SAMPLE_PACKAGE_CANCELLED_HISTORY_LOST';end if;
+ begin perform public.add_shipment_package(c,jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',3,'quantity','1','uom','pcs','package_code','SAMPLE-CANCELLED-BOX'),'cancelled-box');raise exception 'SAMPLE_PACKAGE_CANCELLED_EDIT';exception when others then if sqlerrm<>'INVALID_TRANSITION' then raise;end if;end;
+ perform set_config('request.jwt.claim.sub',current_setting('app.sample_reviewer_id'),true);
+ j:=public.get_customer_return_workspace(c);
+ if jsonb_array_length(j->'shipments')<>1 or jsonb_array_length(j->'receipts')<>2 then raise exception 'SAMPLE_STORES_RETURN_READ_MISSING';end if;
+ perform set_config('request.jwt.claim.sub',current_setting('app.sample_packing_id'),true);
+ if exists(select 1 from public.sales_order_lines where company_id=c) or exists(select 1 from public.sales_orders where company_id=c) then raise exception 'SAMPLE_PACKING_BROAD_COMMERCIAL_READ';end if;
+ j:=public.get_dispatch_order_options(c);
+ if jsonb_array_length(j->'salesOrders')<>1 or jsonb_array_length(j->'salesOrderLines')<>1 or exists(select 1 from jsonb_array_elements(j->'salesOrderLines') r where r?'unit_price') then raise exception 'SAMPLE_PACKING_SAFE_OPTIONS_MISSING';end if;
+ if jsonb_array_length(public.get_customer_return_workspace(c)->'receipts')<>2 or jsonb_array_length(public.get_packing_workspace(c)->'packages')<>3 then raise exception 'SAMPLE_PACKING_OPERATIONAL_READ_MISSING';end if;
+ perform set_config('request.jwt.claim.sub',current_setting('app.sample_planner_id'),true);
+ begin perform public.add_shipment_package(c,jsonb_build_object('shipment_line_id',ship_line,'shipment_revision',3,'quantity','1','uom','pcs','package_code','SAMPLE-UNAUTHORIZED-BOX'),'planner-box');raise exception 'SAMPLE_PACKAGE_PERMISSION_BYPASS';exception when others then if sqlerrm<>'FORBIDDEN' then raise;end if;end;
+ begin perform public.receive_customer_return(c,payload,'planner');raise exception 'SAMPLE_RETURN_PLANNER_PERMISSION_BYPASS';exception when others then if sqlerrm<>'FORBIDDEN' then raise;end if;end;
+ perform set_config('request.jwt.claim.sub',current_setting('app.sample_outsider_id'),true);
+ if exists(select 1 from public.shipment_return_positions where company_id=c) then raise exception 'SAMPLE_RETURN_TENANT_LEAK';end if;
+ begin perform public.get_customer_return_workspace(c);raise exception 'SAMPLE_RETURN_READ_PERMISSION_BYPASS';exception when others then if sqlerrm<>'FORBIDDEN' then raise;end if;end;
+ begin perform public.get_packing_workspace(c);raise exception 'SAMPLE_PACKING_READ_PERMISSION_BYPASS';exception when others then if sqlerrm<>'FORBIDDEN' then raise;end if;end;
+ begin perform public.get_dispatch_order_options(c);raise exception 'SAMPLE_DISPATCH_OPTIONS_PERMISSION_BYPASS';exception when others then if sqlerrm<>'FORBIDDEN' then raise;end if;end;
+ begin perform public.receive_customer_return(c,payload,'outsider');raise exception 'SAMPLE_RETURN_TENANT_COMMAND';exception when others then if sqlerrm<>'FORBIDDEN' then raise;end if;end;
+end $$;
+reset role;
+do $$ begin
+ begin update public.shipment_packages set quantity=1 where company_id=current_setting('app.sample_company_id')::uuid;raise exception 'SAMPLE_PACKAGE_MUTABLE';exception when others then if sqlerrm<>'APPEND_ONLY_HISTORY' then raise;end if;end;
+ begin update public.customer_return_receipts set reason='SAMPLE erased history' where company_id=current_setting('app.sample_company_id')::uuid;raise exception 'SAMPLE_RETURN_MUTABLE';exception when others then if sqlerrm<>'APPEND_ONLY_HISTORY' then raise;end if;end;
+end $$;
+rollback;

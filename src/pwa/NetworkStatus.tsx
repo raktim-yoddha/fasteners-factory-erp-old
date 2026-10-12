@@ -1,8 +1,9 @@
 import { useNetworkStatus } from '@/pwa/useNetworkStatus'
+import type { WorkspaceMode } from '@/local/mode'
 
-export function NetworkStatus() {
+export function NetworkStatus({ mode = 'team' }: { mode?: WorkspaceMode }) {
   const online = useNetworkStatus()
-  const label = online ? 'Online' : 'Offline — read-only shell'
+  const label = mode === 'solo' ? 'Solo — saved on this device' : online ? 'Online' : 'Offline — read-only shell'
 
   return (
     <p className={online ? 'status status-online' : 'status status-offline'} role="status">

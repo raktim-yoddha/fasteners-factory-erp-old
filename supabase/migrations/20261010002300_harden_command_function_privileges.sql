@@ -14,7 +14,14 @@ begin
 end;
 $$;
 
-revoke all on function public.rls_auto_enable() from public, anon, authenticated;
+-- Hosted Supabase may install this helper; the disposable local stack does not.
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    revoke all on function public.rls_auto_enable() from public, anon, authenticated;
+  end if;
+end;
+$$;
 
 create policy "no direct command idempotency access" on public.command_idempotency
   for select to authenticated using (false);

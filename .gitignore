@@ -8,3 +8,5 @@ graphify-out/
 *.zip
 playwright-report/
 test-results/
+backups/
+knowledge/
